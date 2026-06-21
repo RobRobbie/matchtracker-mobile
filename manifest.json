@@ -8,7 +8,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-512.png",
+      "src": "matchtracker-icon-v2.png",
       "sizes": "512x512",
       "type": "image/png"
     }
