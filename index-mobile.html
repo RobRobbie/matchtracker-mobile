@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Match Tracker Mobile</title>
+  <link rel="stylesheet" href="style-mobile.css?v=4">
+
+  <style>
+
+    /* 🔘 MAKE ALL BUTTONS BIGGER */
+    button {
+  padding: 18px;
+  font-size: 20px;
+  font-weight: bold;
+  border-radius: 12px;
+  margin: 5px;
+  cursor: pointer;
+  min-height: 70px;
+}
+
+    /* 📝 MAKE TOP TEXT BIGGER */
+    #venue,
+    #matchDate,
+    #kickOffDisplay {
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      margin: 6.5px 0;
+    }
+
+/* 🎨 BUTTON COLOURS */
+
+#startBtn {
+  background: #2e7d32;
+  color: white;
+}
+
+#halfBtn {
+  background: #f57c00;
+  color: white;
+}
+
+#secondBtn {
+  background: #1565c0;
+  color: white;
+}
+
+#endBtn {
+  background: #c62828;
+  color: white;
+}
+
+button[onclick="resetMatch()"] {
+  background: #555;
+  color: white;
+}
+
+#saveBtn {
+  background: #6a1b9a;
+  color: white;
+}
+
+#reportBtn {
+  background: #283593;
+  color: white;
+}
+
+#statsBtn {
+  background: #00695c;
+  color: white;
+}
+
+button[onclick="undoLastEvent()"] {
+  background: red;
+  color: white;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+/* 🔝 HEADER LAYOUT */
+
+.match-header {
+  text-align: center;
+  margin-bottom: 15px;
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.match-header h2 {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+/* INFO ROW */
+.match-info {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #444;
+}
+
+/* optional divider look */
+.match-info span {
+  position: relative;
+}
+
+/* add separator line between items */
+.match-info span:not(:last-child)::after {
+  content: "|";
+  margin-left: 20px;
+  color: #aaa;
+}
+
+  </style>
+
+</head>
+
+<body>
+
+<div class="match-header">
+
+  <h2 id="matchTitle">Match Tracker</h2>
+
+  <div class="match-info" style="display:none;">
+  <span id="venue"></span>
+  <span id="matchDate"></span>
+  <span id="kickOffDisplay">Kick Off: --</span>
+</div>
+
+</div>
+
+<div id="matchControls">
+
+  <button id="startBtn">Start Match</button>
+  <button id="halfBtn">End 1st Half</button>
+
+  <button id="secondBtn">Start 2nd Half</button>
+  <button id="endBtn">End Match</button>
+
+</div>
+
+<div class="main">
+
+  <div id="berwickEvents" class="team-panel" style="display:none;">
+    <h3>Berwick City</h3>
+    <div class="buttons">
+      <button style="grid-column: span 2;" onclick="addEvent('berwick','Goal')">Goal</button>
+      <button style="grid-column: span 2;" onclick="addPenalty('berwick')">Penalty</button>
+      <button onclick="addEvent('berwick','Shot On Target')">Shot On Target</button>
+      <button onclick="addEvent('berwick','Shot Off Target')">Shot Off Target</button>
+      <button onclick="logEvent('berwick','Corner')">Corner</button>
+      <button onclick="addEvent('berwick','Free Kick')">Free Kick</button>
+      <button onclick="addEvent('berwick','Yellow Card')">Yellow Card</button>
+      <button onclick="addEvent('berwick','Red Card')">Red Card</button>
+      <button style="grid-column: span 2;" onclick="addEvent('berwick','Offside')">Offside</button>
+      <button style="grid-column: span 2;" onclick="makeSub()">Substitution</button>
+
+      <button onclick="showHomeScreen()">
+  BACK
+</button>
+    
+    </div>
+  </div>
+
+  <div class="stats-panel">
+  <h3>Match Stats</h3>
+
+  <div class="center-clocks">
+
+  <div class="clock-box">
+    <div class="clock-label">Match Clock</div>
+    <div id="clock">00:00</div>
+  </div>
+
+  <div class="clock-box">
+    <div class="clock-label">2nd Half Clock</div>
+    <div id="clock2">00:00</div>
+  </div>
+
+</div>
+
+  <div class="score-section">
+    <div id="scoreMain">0 - 0</div>
+  </div>
+
+<div id="eventHeading">
+  Select Team To Record Event
+</div>
+
+<div id="mobileTeams">
+
+  <button id="berwickMobileBtn">
+    BERWICK
+  </button>
+
+  <button id="oppMobileBtn">
+    OPPONENT
+  </button>
+
+</div>
+
+<div id="mobileMenu">
+
+  <button id="timelineBtn">
+    TIMELINE
+  </button>
+
+  <button id="reportsBtn">
+    REPORTS
+  </button>
+
+</div>
+
+  <div class="stats-row" style="display:none;">
+    <div class="team-stats" id="b_stats"></div>
+    <div class="team-stats" id="o_stats"></div>
+</div>
+</div>
+
+  <div id="oppEvents" class="team-panel" style="display:none;">
+    <h3 id="oppTitle">Opponent</h3>
+    <div class="buttons">
+      <button style="grid-column: span 2;" onclick="addEvent('opp','Goal')">Goal</button>
+      <button style="grid-column: span 2;" onclick="addPenalty('opp')">Penalty</button>
+      <button onclick="addEvent('opp','Shot On Target')">Shot On Target</button>
+      <button onclick="addEvent('opp','Shot Off Target')">Shot Off Target</button>
+      <button onclick="logEvent('opp','Corner')">Corner</button>
+      <button onclick="addEvent('opp','Free Kick')">Free Kick</button>
+      <button onclick="addEvent('opp','Yellow Card')">Yellow Card</button>
+      <button onclick="addEvent('opp','Red Card')">Red Card</button>
+      <button style="grid-column: span 2;" onclick="addEvent('opp','Offside')">Offside</button>
+      <button style="grid-column: span 2;" onclick="makeSub('opp')">Substitution</button>
+
+<button style="grid-column: span 2;" onclick="addOpponentPlayer()">
+  Add Opp Player
+</button>
+
+<button onclick="showHomeScreen()">
+  BACK
+</button>
+    
+    </div>
+  </div>
+
+<div id="pitch" onclick="placeOpponent(event)" style="display:none;">
+
+  <div class="half-line"></div>
+  <div class="center-circle"></div>
+
+  <div class="box top-box"></div>
+  <div class="box bottom-box"></div>
+
+  <div class="goal top-goal"></div>
+  <div class="goal bottom-goal"></div>
+
+</div>
+
+<div id="benchArea" style="display:none;"></div>
+<div id="oppBenchArea" style="display:none;"></div>
+
+</div>
+
+<div class="events-log" style="display:none;">
+
+<button
+  onclick="showHomeScreen()"
+  style="
+    width:100%;
+    min-height:90px;
+    font-size:28px;
+    font-weight:bold;
+    margin-bottom:15px;
+  ">
+  BACK
+</button>
+
+<div style="display:flex; justify-content:space-between; align-items:center;">
+  <h3>Berwick</h3>
+  <h3>Events</h3>
+  <h3 id="oppHeader">Opponent</h3>
+</div>
+
+<div id="timeline"></div>
+
+</div>
+
+<script src="app-mobile.js?v=3"></script>
+
+
+</body>
+</html>
