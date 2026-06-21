@@ -1,0 +1,9 @@
+{
+  "name": "MatchTracker",
+  "short_name": "MatchTracker",
+  "start_url": "/matchtracker-mobile/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1E3A5F",
+  "orientation": "portrait"
+}
