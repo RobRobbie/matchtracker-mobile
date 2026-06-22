@@ -1194,12 +1194,6 @@ if(type === "Yellow Card"){
 }
   let nameText = player ? player : "";
 
-
-  // assist
-  if(type === "Goal" && assist){
-  name += ` (Assist: ${assist})`;
-}
-
 const icons = {
   "Goal": "⚽",
 
