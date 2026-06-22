@@ -2979,7 +2979,6 @@ try {
   //document.getElementById("reportBtn").onclick = generateReport;
   //document.getElementById("statsBtn").onclick = showPlayerStats;
 
-  console.log("Reached Berwick Button Setup");
   document.getElementById("berwickMobileBtn").onclick =
   showBerwickEvents;
 
@@ -3126,8 +3125,6 @@ if(cleanText.includes("→") && cleanText.split("→").length === 2){
 
     let isBerwick = e.querySelector('.side.left .event') !== null;
 
-    console.log("EVENT HTML:", e.innerHTML);
-    console.log("isBerwick:", isBerwick);
 
     html += `
   <div class="timeline-row">
