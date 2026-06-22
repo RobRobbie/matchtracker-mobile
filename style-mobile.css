@@ -598,3 +598,10 @@ body > button {
   margin:25px 0 15px 0;
   color:#444;
 }
+
+#versionNumber{
+  text-align:center;
+  font-size:12px;
+  color:#888;
+  margin:20px 0 10px 0;
+}
