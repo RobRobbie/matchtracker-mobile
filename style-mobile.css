@@ -601,7 +601,9 @@ body > button {
 
 #versionNumber{
   text-align:center;
-  font-size:12px;
-  color:#888;
-  margin:20px 0 10px 0;
+  font-size:24px;
+  color:red;
+  font-weight:bold;
+  margin:20px;
+  display:block;
 }
