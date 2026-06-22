@@ -44,7 +44,6 @@ let matchSquad = [];
 let opponentPlayers = [];
 let opponentYellowCards = {};
 let movingOpponentIndex = null;
-let pendingOpponentPlayer = null;
 let movingBerwickIndex = null;
 let opponentBench = [];
 
