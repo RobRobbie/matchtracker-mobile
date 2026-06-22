@@ -2976,8 +2976,6 @@ try {
   document.getElementById("halfBtn").onclick = endFirstHalf;
   document.getElementById("secondBtn").onclick = startSecondHalf;
   document.getElementById("endBtn").onclick = endMatch;
-  //document.getElementById("reportBtn").onclick = generateReport;
-  //document.getElementById("statsBtn").onclick = showPlayerStats;
 
   document.getElementById("berwickMobileBtn").onclick =
   showBerwickEvents;
