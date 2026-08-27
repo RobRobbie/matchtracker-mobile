@@ -13,7 +13,7 @@ let opponentTeams = [
 let berwickPlayers = [
   "1 - Pedro Formosa","2 - Aaron Hunter","3 - Ashley Slater","4 - Josh Scarlett","5 - Blake Pearson",
   "6 - Philip Hawkins","7 - Sila Onye","9 - Jalil Nabizadah",
-  "11 - Jarod Blackbourn","12 - Simon Mur","13 - Christian Lettieri","14 - Noor Nawrozi",
+  "11 - Jarod Blackbourn","12 - Simon Mur",
   "15 - Fraidoon Mohammadi","16 - Tanner Kidwell","17 - Kyle Marambio","18 - Christian Cavallo",
   "21 - Nathan Credlin",
   "22 - Franco Federico","23 - Matthew Foschini","25 - Daniel Carnevale","31 - Harry Simmons"
