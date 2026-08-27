@@ -19,6 +19,22 @@ let berwickPlayers = [
   "22 - Franco Federico","23 - Matthew Foschini","25 - Daniel Carnevale","31 - Harry Simmons"
 ];
 
+// ============================
+// BORROWED PLAYERS
+// ============================
+
+// Load saved borrowed players from this browser
+let borrowedPlayers =
+  JSON.parse(localStorage.getItem("borrowedPlayers")) || [];
+
+// Save borrowed players
+function saveBorrowedPlayers(){
+  localStorage.setItem(
+    "borrowedPlayers",
+    JSON.stringify(borrowedPlayers)
+  );
+}
+
 const EVENTS = {
   GOAL: "Goal",
   SHOT_ON: "Shot On Target",
