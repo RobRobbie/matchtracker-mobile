@@ -489,6 +489,44 @@ function selectXI(){
       left.appendChild(d);
     });
 
+        // ============================
+    // BORROWED PLAYERS
+    // ============================
+
+    borrowedPlayers.forEach(p=>{
+
+      if(lineup.starters.find(x=>x.id===p.id)) return;
+
+      let d = btn(
+        `${p.number} - ${p.name} (BORROWED)`
+      );
+
+      d.style.background = "#e8f4ff";
+
+      d.onclick = ()=>{
+
+        if(lineup.starters.length >= 11) return;
+
+        let pl = {
+          id: p.id,
+          name: p.name,
+          number: p.number,
+          normalTeam: p.normalTeam,
+          borrowed: true,
+          position:
+            formations[currentFormation][
+              lineup.starters.length
+            ]
+        };
+
+        lineup.starters.push(pl);
+
+        render();
+      };
+
+      left.appendChild(d);
+    });
+
     lineup.starters.forEach(p=>{
       let d=btn(p.name);
       d.style.background="#90ee90";
@@ -502,6 +540,19 @@ function selectXI(){
 
   render();
 
+  // ============================
+  // ADD BORROWED PLAYER
+  // ============================
+
+  let borrowedBtn = document.createElement("button");
+
+  borrowedBtn.innerText = "＋ ADD BORROWED PLAYER";
+
+  borrowedBtn.onclick = ()=>{
+    addBorrowedPlayer();
+  };
+
+   
   let accept=document.createElement("button");
   accept.innerText="ACCEPT STARTING XI";
 
@@ -518,6 +569,7 @@ function selectXI(){
   wrap.appendChild(left);
   wrap.appendChild(right);
   mainBox.appendChild(wrap);
+  mainBox.appendChild(borrowedBtn); 
   mainBox.appendChild(accept);
 }
 
