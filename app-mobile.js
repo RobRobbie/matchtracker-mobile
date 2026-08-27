@@ -489,7 +489,7 @@ function selectXI(){
       left.appendChild(d);
     });
 
-        // ============================
+    // ============================
     // BORROWED PLAYERS
     // ============================
 
@@ -615,6 +615,42 @@ function selectBench(){
         if(lineup.bench.length>=6) return;
 
         lineup.bench.push(parse(p));
+        render();
+      };
+
+      left.appendChild(d);
+    });
+
+        // ============================
+    // BORROWED PLAYERS
+    // ============================
+
+    borrowedPlayers.forEach(p=>{
+
+      // Skip if already a starter
+      if(lineup.starters.find(x=>x.id===p.id)) return;
+
+      // Skip if already on bench
+      if(lineup.bench.find(x=>x.id===p.id)) return;
+
+      let d = btn(
+        `${p.number} - ${p.name} (BORROWED)`
+      );
+
+      d.style.background = "#e8f4ff";
+
+      d.onclick = ()=>{
+
+        if(lineup.bench.length >= 6) return;
+
+        lineup.bench.push({
+          id: p.id,
+          name: p.name,
+          number: p.number,
+          normalTeam: p.normalTeam,
+          borrowed: true
+        });
+
         render();
       };
 
