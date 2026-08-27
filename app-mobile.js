@@ -35,6 +35,167 @@ function saveBorrowedPlayers(){
   );
 }
 
+// ============================
+// ADD BORROWED PLAYER
+// ============================
+
+function addBorrowedPlayer(){
+
+  openPopup();
+
+  mainBox.innerHTML = `
+    <h3 style="
+      text-align:center;
+      margin-bottom:20px;
+      font-size:28px;
+    ">
+      Add Borrowed Player
+    </h3>
+
+    <div style="margin-bottom:15px;">
+      <label>
+        <b>Player Name</b>
+      </label>
+      <input
+        id="borrowedName"
+        type="text"
+        placeholder="Enter player name"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          font-size:20px;
+          margin-top:6px;
+        "
+      >
+    </div>
+
+    <div style="margin-bottom:15px;">
+      <label>
+        <b>Shirt Number</b>
+      </label>
+      <input
+        id="borrowedNumber"
+        type="number"
+        placeholder="Enter shirt number"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          font-size:20px;
+          margin-top:6px;
+        "
+      >
+    </div>
+
+    <div style="margin-bottom:15px;">
+      <label>
+        <b>Normally Plays For</b>
+      </label>
+      <input
+        id="borrowedTeam"
+        type="text"
+        placeholder="e.g. Reserve Team"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          font-size:20px;
+          margin-top:6px;
+        "
+      >
+    </div>
+  `;
+
+  let row = document.createElement("div");
+
+  row.style.display = "flex";
+  row.style.justifyContent = "center";
+  row.style.gap = "10px";
+  row.style.marginTop = "20px";
+
+  // SAVE
+  let saveBtn = document.createElement("button");
+
+  saveBtn.innerText = "Save Borrowed Player";
+
+  saveBtn.onclick = ()=>{
+
+    let name =
+      document.getElementById("borrowedName")
+        .value.trim();
+
+    let number =
+      document.getElementById("borrowedNumber")
+        .value.trim();
+
+    let normalTeam =
+      document.getElementById("borrowedTeam")
+        .value.trim();
+
+    if(name === ""){
+      alert("Enter player name");
+      return;
+    }
+
+    if(number === ""){
+      alert("Enter shirt number");
+      return;
+    }
+
+    if(normalTeam === ""){
+      alert("Enter the player's normal team");
+      return;
+    }
+
+    // Prevent duplicate player names
+    let exists =
+      borrowedPlayers.find(
+        p => p.name.toLowerCase() === name.toLowerCase()
+      );
+
+    if(exists){
+      alert("That borrowed player already exists");
+      return;
+    }
+
+    // Create unique ID
+    let id =
+      "BP-" + Date.now();
+
+    borrowedPlayers.push({
+      id: id,
+      name: name,
+      number: number,
+      normalTeam: normalTeam,
+      borrowed: true
+    });
+
+    saveBorrowedPlayers();
+
+    alert(
+      name +
+      " has been saved as a borrowed player."
+    );
+
+    closePopup();
+  };
+
+  // CANCEL
+  let cancelBtn = document.createElement("button");
+
+  cancelBtn.innerText = "Cancel";
+
+  cancelBtn.onclick = ()=>{
+    closePopup();
+  };
+
+  row.appendChild(saveBtn);
+  row.appendChild(cancelBtn);
+
+  mainBox.appendChild(row);
+}
+
 const EVENTS = {
   GOAL: "Goal",
   SHOT_ON: "Shot On Target",
