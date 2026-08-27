@@ -179,6 +179,7 @@ function addBorrowedPlayer(){
     );
 
     closePopup();
+    selectXI();
   };
 
   // CANCEL
