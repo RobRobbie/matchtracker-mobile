@@ -19,6 +19,184 @@ let berwickPlayers = [
   "22 - Franco Federico","23 - Matthew Foschini","25 - Daniel Carnevale","31 - Harry Simmons"
 ];
 
+// ============================
+// BORROWED PLAYERS
+// ============================
+
+// Load saved borrowed players from this browser
+let borrowedPlayers =
+  JSON.parse(localStorage.getItem("borrowedPlayers")) || [];
+
+// Save borrowed players
+function saveBorrowedPlayers(){
+  localStorage.setItem(
+    "borrowedPlayers",
+    JSON.stringify(borrowedPlayers)
+  );
+}
+
+// ============================
+// ADD BORROWED PLAYER
+// ============================
+
+function addBorrowedPlayer(){
+
+  openPopup();
+
+  mainBox.innerHTML = `
+    <h3 style="
+      text-align:center;
+      margin-bottom:20px;
+      font-size:28px;
+    ">
+      Add Borrowed Player
+    </h3>
+
+    <div style="margin-bottom:15px;">
+      <label>
+        <b>Player Name</b>
+      </label>
+      <input
+        id="borrowedName"
+        type="text"
+        placeholder="Enter player name"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          font-size:20px;
+          margin-top:6px;
+        "
+      >
+    </div>
+
+    <div style="margin-bottom:15px;">
+      <label>
+        <b>Shirt Number</b>
+      </label>
+      <input
+        id="borrowedNumber"
+        type="number"
+        placeholder="Enter shirt number"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          font-size:20px;
+          margin-top:6px;
+        "
+      >
+    </div>
+
+    <div style="margin-bottom:15px;">
+      <label>
+        <b>Normally Plays For</b>
+      </label>
+      <input
+        id="borrowedTeam"
+        type="text"
+        placeholder="e.g. Reserve Team"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          font-size:20px;
+          margin-top:6px;
+        "
+      >
+    </div>
+  `;
+
+  let row = document.createElement("div");
+
+  row.style.display = "flex";
+  row.style.justifyContent = "center";
+  row.style.gap = "10px";
+  row.style.marginTop = "20px";
+
+  // SAVE
+  let saveBtn = document.createElement("button");
+
+  saveBtn.innerText = "Save Borrowed Player";
+
+  saveBtn.onclick = ()=>{
+
+    let name =
+      document.getElementById("borrowedName")
+        .value.trim();
+
+    let number =
+      document.getElementById("borrowedNumber")
+        .value.trim();
+
+    let normalTeam =
+      document.getElementById("borrowedTeam")
+        .value.trim();
+
+    if(name === ""){
+      alert("Enter player name");
+      return;
+    }
+
+    if(number === ""){
+      alert("Enter shirt number");
+      return;
+    }
+
+    if(normalTeam === ""){
+      alert("Enter the player's normal team");
+      return;
+    }
+
+    // Prevent duplicate player names
+    let exists =
+      borrowedPlayers.find(
+        p => p.name.toLowerCase() === name.toLowerCase()
+      );
+
+    if(exists){
+      alert("That borrowed player already exists");
+      return;
+    }
+
+    // Create unique ID
+    let id =
+      "BP-" + Date.now();
+
+    borrowedPlayers.push({
+      id: id,
+      name: name,
+      number: number,
+      normalTeam: normalTeam,
+      borrowed: true
+    });
+
+    saveBorrowedPlayers();
+
+    alert(
+      name +
+      " has been saved as a borrowed player."
+    );
+
+    closePopup();
+    selectXI();
+  };
+
+  // CANCEL
+  let cancelBtn = document.createElement("button");
+
+  cancelBtn.innerText = "Cancel";
+
+  cancelBtn.onclick = ()=>{
+    closePopup();
+  };
+
+  row.appendChild(saveBtn);
+  row.appendChild(cancelBtn);
+
+  mainBox.appendChild(row);
+}
+
 const EVENTS = {
   GOAL: "Goal",
   SHOT_ON: "Shot On Target",
@@ -311,6 +489,44 @@ function selectXI(){
       left.appendChild(d);
     });
 
+    // ============================
+    // BORROWED PLAYERS
+    // ============================
+
+    borrowedPlayers.forEach(p=>{
+
+      if(lineup.starters.find(x=>x.id===p.id)) return;
+
+      let d = btn(
+        `${p.number} - ${p.name} (BORROWED)`
+      );
+
+      d.style.background = "#e8f4ff";
+
+      d.onclick = ()=>{
+
+        if(lineup.starters.length >= 11) return;
+
+        let pl = {
+          id: p.id,
+          name: p.name,
+          number: p.number,
+          normalTeam: p.normalTeam,
+          borrowed: true,
+          position:
+            formations[currentFormation][
+              lineup.starters.length
+            ]
+        };
+
+        lineup.starters.push(pl);
+
+        render();
+      };
+
+      left.appendChild(d);
+    });
+
     lineup.starters.forEach(p=>{
       let d=btn(p.name);
       d.style.background="#90ee90";
@@ -324,6 +540,19 @@ function selectXI(){
 
   render();
 
+  // ============================
+  // ADD BORROWED PLAYER
+  // ============================
+
+  let borrowedBtn = document.createElement("button");
+
+  borrowedBtn.innerText = "＋ ADD BORROWED PLAYER";
+
+  borrowedBtn.onclick = ()=>{
+    addBorrowedPlayer();
+  };
+
+   
   let accept=document.createElement("button");
   accept.innerText="ACCEPT STARTING XI";
 
@@ -340,6 +569,7 @@ function selectXI(){
   wrap.appendChild(left);
   wrap.appendChild(right);
   mainBox.appendChild(wrap);
+  mainBox.appendChild(borrowedBtn); 
   mainBox.appendChild(accept);
 }
 
@@ -385,6 +615,42 @@ function selectBench(){
         if(lineup.bench.length>=6) return;
 
         lineup.bench.push(parse(p));
+        render();
+      };
+
+      left.appendChild(d);
+    });
+
+        // ============================
+    // BORROWED PLAYERS
+    // ============================
+
+    borrowedPlayers.forEach(p=>{
+
+      // Skip if already a starter
+      if(lineup.starters.find(x=>x.id===p.id)) return;
+
+      // Skip if already on bench
+      if(lineup.bench.find(x=>x.id===p.id)) return;
+
+      let d = btn(
+        `${p.number} - ${p.name} (BORROWED)`
+      );
+
+      d.style.background = "#e8f4ff";
+
+      d.onclick = ()=>{
+
+        if(lineup.bench.length >= 6) return;
+
+        lineup.bench.push({
+          id: p.id,
+          name: p.name,
+          number: p.number,
+          normalTeam: p.normalTeam,
+          borrowed: true
+        });
+
         render();
       };
 
