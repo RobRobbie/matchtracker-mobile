@@ -25,14 +25,14 @@ let berwickPlayers = [
 
 // Load saved borrowed players from this browser
 let borrowedPlayers =
-  JSON.parse(localStorage.getItem("borrowedPlayers")) || [];
+    MatchTrackerStorage.loadBorrowedPlayers();
+
 
 // Save borrowed players
-function saveBorrowedPlayers(){
-  localStorage.setItem(
-    "borrowedPlayers",
-    JSON.stringify(borrowedPlayers)
-  );
+function saveBorrowedPlayers() {
+    MatchTrackerStorage.saveBorrowedPlayers(
+        borrowedPlayers
+    );
 }
 
 // ============================
