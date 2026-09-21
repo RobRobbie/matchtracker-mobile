@@ -27,6 +27,18 @@ let berwickPlayers = [
 let borrowedPlayers =
     MatchTrackerStorage.loadBorrowedPlayers();
 
+borrowedPlayers = borrowedPlayers.map(p => ({
+  ...p,
+  number:
+    p.number !== undefined &&
+    p.number !== null &&
+    String(p.number).trim() !== ""
+      ? String(p.number).trim()
+      : "",
+  normalTeam: p.normalTeam || "",
+  borrowed: true
+}));
+
 
 // Save borrowed players
 function saveBorrowedPlayers() {
@@ -262,8 +274,39 @@ function btn(text){
 }
 
 function parse(p){
-  let [id,name]=p.split(" - ");
-  return {id,name};
+  let [number,name]=p.split(" - ");
+
+  return {
+    id: number,
+    number: number,
+    name: name,
+    normalTeam: "Berwick City",
+    borrowed: false
+  };
+}
+
+// Standard player display used throughout MatchTracker.
+// Every player shown to the coach uses the same format:
+// SHIRT NUMBER - PLAYER NAME
+function playerLabel(p){
+  if(!p) return "";
+
+  let number =
+    p.number !== undefined &&
+    p.number !== null &&
+    String(p.number).trim() !== ""
+      ? String(p.number).trim()
+      : (
+          p.id !== undefined &&
+          p.id !== null &&
+          !String(p.id).startsWith("BP-")
+            ? String(p.id).trim()
+            : ""
+        );
+
+  return number
+    ? `${number} - ${p.name}`
+    : p.name;
 }
 
 // ============================
@@ -460,64 +503,46 @@ function selectXI(){
   let title=document.createElement("h3");
   mainBox.appendChild(title);
 
+
+  // ============================
+  // RENDER STARTING XI
+  // ============================
+
   function render(){
 
     left.innerHTML="<b>Available Players</b>";
     right.innerHTML="<b>Starting XI</b>";
 
     let count = lineup.starters.length;
+
     title.innerText = count < 11
-  ? `Select Player (${count+1}/11)`
-  : "Starting XI Complete";
+      ? `Select Player (${count+1}/11)`
+      : "Starting XI Complete";
+
+
+    // ============================
+    // NORMAL PLAYERS
+    // ============================
 
     berwickPlayers.forEach(p=>{
+
       let id=p.split(" - ")[0];
+
+      // Skip players already selected
       if(lineup.starters.find(x=>x.id===id)) return;
 
       let d=btn(p);
 
       d.onclick=()=>{
+
         if(lineup.starters.length>=11) return;
 
         let pl=parse(p);
-        pl.position = formations[currentFormation][lineup.starters.length];
 
-        lineup.starters.push(pl);
-        render();
-      };
-
-      left.appendChild(d);
-    });
-
-    // ============================
-    // BORROWED PLAYERS
-    // ============================
-
-    borrowedPlayers.forEach(p=>{
-
-      if(lineup.starters.find(x=>x.id===p.id)) return;
-
-      let d = btn(
-        `${p.number} - ${p.name} (BORROWED)`
-      );
-
-      d.style.background = "#e8f4ff";
-
-      d.onclick = ()=>{
-
-        if(lineup.starters.length >= 11) return;
-
-        let pl = {
-          id: p.id,
-          name: p.name,
-          number: p.number,
-          normalTeam: p.normalTeam,
-          borrowed: true,
-          position:
-            formations[currentFormation][
-              lineup.starters.length
-            ]
-        };
+        pl.position =
+          formations[currentFormation][
+            lineup.starters.length
+          ];
 
         lineup.starters.push(pl);
 
@@ -526,51 +551,521 @@ function selectXI(){
 
       left.appendChild(d);
     });
+
+
+    // ============================
+    // STARTING XI
+    // ============================
 
     lineup.starters.forEach(p=>{
-      let d=btn(p.name);
+
+      let d=btn(playerLabel(p));
+
       d.style.background="#90ee90";
+
       d.onclick=()=>{
-        lineup.starters=lineup.starters.filter(x=>x.id!==p.id);
+
+        lineup.starters =
+          lineup.starters.filter(
+            x=>x.id!==p.id
+          );
+
         render();
       };
+
       right.appendChild(d);
     });
+
   }
+
+
+  // ============================
+  // BORROWED PLAYERS PANEL
+  // ============================
+
+  let borrowedPanel =
+    document.createElement("div");
+
+  borrowedPanel.style.marginTop = "15px";
+  borrowedPanel.style.border =
+    "1px solid #c7d7e8";
+  borrowedPanel.style.borderRadius = "12px";
+  borrowedPanel.style.overflow = "hidden";
+  borrowedPanel.style.background = "#f1f4f6";
+
+
+  // ============================
+  // BORROWED HEADER
+  // ============================
+
+  let borrowedHeader =
+    document.createElement("button");
+
+  borrowedHeader.style.width = "100%";
+  borrowedHeader.style.border = "none";
+  borrowedHeader.style.background = "#f1f4f6";
+  borrowedHeader.style.padding = "14px";
+  borrowedHeader.style.textAlign = "left";
+  borrowedHeader.style.cursor = "pointer";
+  borrowedHeader.style.display = "flex";
+  borrowedHeader.style.alignItems = "center";
+  borrowedHeader.style.justifyContent = "space-between";
+  borrowedHeader.style.boxSizing = "border-box";
+
+
+  let borrowedHeaderText =
+    document.createElement("div");
+
+  borrowedHeaderText.style.flex = "1";
+
+
+  let borrowedTitle =
+    document.createElement("div");
+
+  borrowedTitle.style.fontSize = "19px";
+  borrowedTitle.style.fontWeight = "bold";
+  borrowedTitle.style.color = "#1E3A5F";
+
+
+  let borrowedDescription =
+    document.createElement("div");
+
+  borrowedDescription.style.fontSize = "13px";
+  borrowedDescription.style.color = "#555";
+  borrowedDescription.style.marginTop = "4px";
+  borrowedDescription.innerText =
+    "View available borrowed players or add a new borrowed player";
+
+
+  let borrowedArrow =
+    document.createElement("div");
+
+  borrowedArrow.style.fontSize = "24px";
+  borrowedArrow.style.color = "#1E3A5F";
+  borrowedArrow.style.marginLeft = "10px";
+
+
+  borrowedHeaderText.appendChild(borrowedTitle);
+
+  borrowedHeaderText.appendChild(
+    borrowedDescription
+  );
+
+  borrowedHeader.appendChild(
+    borrowedHeaderText
+  );
+
+  borrowedHeader.appendChild(
+    borrowedArrow
+  );
+
+
+  // ============================
+  // BORROWED CONTENT
+  // ============================
+
+  let borrowedContent =
+    document.createElement("div");
+
+  borrowedContent.style.display = "none";
+  borrowedContent.style.padding = "12px";
+  borrowedContent.style.background = "#ffffff";
+  borrowedContent.style.borderTop =
+    "1px solid #d9e2ec";
+
+
+  // ============================
+  // UPDATE BORROWED COUNT
+  // ============================
+
+  function getAvailableBorrowedPlayers(){
+
+    return borrowedPlayers.filter(p => {
+
+      return !lineup.starters.find(
+        x => x.id === p.id
+      );
+
+    });
+
+  }
+
+
+  function updateBorrowedHeader(){
+
+    let available =
+      getAvailableBorrowedPlayers();
+
+    borrowedTitle.innerText =
+      `👥 Borrowed Players (${available.length})`;
+
+    if(
+      borrowedContent.style.display === "none"
+    ){
+
+      borrowedArrow.innerText = "▼";
+
+    } else {
+
+      borrowedArrow.innerText = "▲";
+
+    }
+
+  }
+
+
+  // ============================
+  // RENDER BORROWED CONTENT
+  // ============================
+
+  function renderBorrowedContent(){
+
+    borrowedContent.innerHTML = "";
+
+
+    let available =
+      getAvailableBorrowedPlayers();
+
+
+    // ============================
+    // SEARCH
+    // ============================
+
+    let search =
+      document.createElement("input");
+
+    search.type = "text";
+
+    search.placeholder =
+      "Search borrowed players...";
+
+    search.style.width = "100%";
+    search.style.boxSizing = "border-box";
+    search.style.padding = "12px";
+    search.style.fontSize = "16px";
+    search.style.border =
+      "1px solid #ccd6e0";
+    search.style.borderRadius = "8px";
+    search.style.marginBottom = "12px";
+
+
+    borrowedContent.appendChild(search);
+
+
+    let playerList =
+      document.createElement("div");
+
+
+    function renderList(filter = ""){
+
+      playerList.innerHTML = "";
+
+
+      let filtered =
+        available.filter(p => {
+
+          let text =
+            (
+              p.name +
+              " " +
+              p.number +
+              " " +
+              p.normalTeam
+            ).toLowerCase();
+
+          return text.includes(
+            filter.toLowerCase()
+          );
+
+        });
+
+
+      if(filtered.length === 0){
+
+        let empty =
+          document.createElement("div");
+
+        empty.innerText =
+          available.length === 0
+            ? "No borrowed players available for this match."
+            : "No borrowed players match your search.";
+
+        empty.style.textAlign = "center";
+        empty.style.padding = "15px";
+        empty.style.color = "#666";
+
+        playerList.appendChild(empty);
+
+      } else {
+
+        filtered.forEach(p => {
+
+          let row =
+            document.createElement("div");
+
+          row.style.display = "flex";
+          row.style.alignItems = "center";
+          row.style.justifyContent =
+            "space-between";
+          row.style.padding = "10px";
+          row.style.marginBottom = "8px";
+          row.style.background = "#f1f4f6";
+          row.style.borderRadius = "8px";
+
+
+          let playerInfo =
+            document.createElement("div");
+
+          playerInfo.style.flex = "1";
+
+
+          let playerName =
+            document.createElement("div");
+
+          playerName.innerText =
+            `${p.number} - ${p.name}`;
+
+          playerName.style.fontWeight = "bold";
+          playerName.style.color = "#243447";
+
+
+          let playerTeam =
+            document.createElement("div");
+
+          playerTeam.innerText =
+            p.normalTeam || "";
+
+          playerTeam.style.fontSize = "12px";
+          playerTeam.style.color = "#666";
+          playerTeam.style.marginTop = "2px";
+
+
+          playerInfo.appendChild(
+            playerName
+          );
+
+          playerInfo.appendChild(
+            playerTeam
+          );
+
+
+          let addBtn =
+            document.createElement("button");
+
+          addBtn.innerText = "+";
+
+          addBtn.style.width = "42px";
+          addBtn.style.height = "42px";
+          addBtn.style.borderRadius = "50%";
+          addBtn.style.border = "none";
+          addBtn.style.background = "#1E3A5F";
+          addBtn.style.color = "white";
+          addBtn.style.fontSize = "24px";
+          addBtn.style.fontWeight = "bold";
+          addBtn.style.cursor = "pointer";
+
+
+          addBtn.onclick = ()=>{
+
+            if(lineup.starters.length >= 11){
+              return;
+            }
+
+
+            let pl = {
+              id: p.id,
+              number: p.number,
+              name: p.name,
+              normalTeam: p.normalTeam || "",
+              borrowed: true,
+              position:
+                formations[currentFormation][
+                  lineup.starters.length
+                ]
+            };
+
+
+            lineup.starters.push(pl);
+
+
+            render();
+
+            renderBorrowedContent();
+
+            updateBorrowedHeader();
+
+          };
+
+
+          row.appendChild(
+            playerInfo
+          );
+
+          row.appendChild(
+            addBtn
+          );
+
+          playerList.appendChild(
+            row
+          );
+
+        });
+
+      }
+
+    }
+
+
+    renderList();
+
+
+    search.oninput = ()=>{
+
+      renderList(
+        search.value
+      );
+
+    };
+
+
+    borrowedContent.appendChild(
+      playerList
+    );
+
+
+    // ============================
+    // ADD NEW BORROWED PLAYER
+    // ============================
+
+    let addNewBtn =
+      document.createElement("button");
+
+    addNewBtn.innerText =
+      "＋ Add New Borrowed Player";
+
+    addNewBtn.style.width = "100%";
+    addNewBtn.style.padding = "12px";
+    addNewBtn.style.marginTop = "8px";
+    addNewBtn.style.fontSize = "16px";
+    addNewBtn.style.fontWeight = "bold";
+    addNewBtn.style.background = "white";
+    addNewBtn.style.color = "#1E3A5F";
+    addNewBtn.style.border =
+      "1px solid #9db7d1";
+    addNewBtn.style.borderRadius = "8px";
+    addNewBtn.style.cursor = "pointer";
+
+
+    addNewBtn.onclick = ()=>{
+
+      addBorrowedPlayer();
+
+    };
+
+
+    borrowedContent.appendChild(
+      addNewBtn
+    );
+
+  }
+
+
+  // ============================
+  // OPEN / CLOSE BORROWED PANEL
+  // ============================
+
+  borrowedHeader.onclick = ()=>{
+
+    let isOpen =
+      borrowedContent.style.display !== "none";
+
+
+    if(isOpen){
+
+      borrowedContent.style.display =
+        "none";
+
+    } else {
+
+      borrowedContent.style.display =
+        "block";
+
+      renderBorrowedContent();
+
+    }
+
+
+    updateBorrowedHeader();
+
+  };
+
+
+  updateBorrowedHeader();
+
+
+  borrowedPanel.appendChild(
+    borrowedHeader
+  );
+
+  borrowedPanel.appendChild(
+    borrowedContent
+  );
+
+
+  // ============================
+  // ACCEPT STARTING XI
+  // ============================
+
+  let accept =
+    document.createElement("button");
+
+  accept.innerText =
+    "ACCEPT STARTING XI";
+
+
+  accept.onclick=()=>{
+
+    if(lineup.starters.length!==11){
+
+      alert("Select 11 players");
+
+      return;
+    }
+
+
+    activePlayers=[
+      ...lineup.starters
+    ];
+
+
+    renderPitch();
+
+    selectBench();
+
+  };
+
+
+  // ============================
+  // BUILD SCREEN
+  // ============================
+
+  wrap.appendChild(left);
+
+  wrap.appendChild(right);
+
+  mainBox.appendChild(wrap);
+
+  mainBox.appendChild(
+    borrowedPanel
+  );
+
+  mainBox.appendChild(
+    accept
+  );
+
 
   render();
 
-  // ============================
-  // ADD BORROWED PLAYER
-  // ============================
-
-  let borrowedBtn = document.createElement("button");
-
-  borrowedBtn.innerText = "＋ ADD BORROWED PLAYER";
-
-  borrowedBtn.onclick = ()=>{
-    addBorrowedPlayer();
-  };
-
-   
-  let accept=document.createElement("button");
-  accept.innerText="ACCEPT STARTING XI";
-
-  accept.onclick=()=>{
-    if(lineup.starters.length!==11){
-      alert("Select 11 players");
-      return;
-    }
-    activePlayers=[...lineup.starters];
-    renderPitch();
-    selectBench();
-  };
-
-  wrap.appendChild(left);
-  wrap.appendChild(right);
-  mainBox.appendChild(wrap);
-  mainBox.appendChild(borrowedBtn); 
-  mainBox.appendChild(accept);
 }
 
 // ============================
@@ -581,128 +1076,767 @@ function selectBench(){
 
   openPopup();
 
-  let left=document.createElement("div");
-  let right=document.createElement("div");
+  let left = document.createElement("div");
+  let right = document.createElement("div");
 
-  left.style="width:50%";
-  right.style="width:50%";
+  left.style = "width:50%";
+  right.style = "width:50%";
 
-  let wrap=document.createElement("div");
-  wrap.style="display:flex;gap:20px;";
+  let wrap = document.createElement("div");
+  wrap.style = "display:flex;gap:20px;";
 
-  let title=document.createElement("h3");
+  let title = document.createElement("h3");
   mainBox.appendChild(title);
+
+
+  // ============================
+  // RENDER BENCH
+  // ============================
 
   function render(){
 
-    left.innerHTML="<b>Available Players</b>";
-    right.innerHTML="<b>Substitutes</b>";
+    left.innerHTML = "<b>Available Players</b>";
+    right.innerHTML = "<b>Substitutes</b>";
 
-    title.innerText=`Select Substitutes (${lineup.bench.length}/6)`;
+    title.innerText =
+      `Select Substitutes (${lineup.bench.length}/6)`;
 
-    berwickPlayers.forEach(p=>{
-      let id=p.split(" - ")[0];
 
-      // skip starters
-      if(lineup.starters.find(x=>x.id===id)) return;
-
-      // skip already selected
-      if(lineup.bench.find(x=>x.id===id)) return;
-
-      let d=btn(p);
-
-      d.onclick=()=>{
-        if(lineup.bench.length>=6) return;
-
-        lineup.bench.push(parse(p));
-        render();
-      };
-
-      left.appendChild(d);
-    });
-
-        // ============================
-    // BORROWED PLAYERS
+    // ============================
+    // NORMAL PLAYERS
     // ============================
 
-    borrowedPlayers.forEach(p=>{
+    berwickPlayers.forEach(p => {
 
-      // Skip if already a starter
-      if(lineup.starters.find(x=>x.id===p.id)) return;
+      let id = p.split(" - ")[0];
 
-      // Skip if already on bench
-      if(lineup.bench.find(x=>x.id===p.id)) return;
+      // Skip starters
+      if(
+        lineup.starters.find(
+          x => x.id === id
+        )
+      ) return;
 
-      let d = btn(
-        `${p.number} - ${p.name} (BORROWED)`
-      );
+      // Skip already selected
+      if(
+        lineup.bench.find(
+          x => x.id === id
+        )
+      ) return;
 
-      d.style.background = "#e8f4ff";
 
-      d.onclick = ()=>{
+      let d = btn(p);
 
-        if(lineup.bench.length >= 6) return;
 
-        lineup.bench.push({
-          id: p.id,
-          name: p.name,
-          number: p.number,
-          normalTeam: p.normalTeam,
-          borrowed: true
-        });
+      d.onclick = () => {
+
+        if(lineup.bench.length >= 6){
+          return;
+        }
+
+
+        lineup.bench.push(
+          parse(p)
+        );
+
 
         render();
+
       };
+
 
       left.appendChild(d);
+
     });
 
-    lineup.bench.forEach((p,i)=>{
-      let d=btn(`SUB ${i+1}: ${p.name}`);
-      d.style.background="#add8e6";
 
-      d.onclick=()=>{
-        lineup.bench=lineup.bench.filter(x=>x.id!==p.id);
+    // ============================
+    // SELECTED SUBSTITUTES
+    // ============================
+
+    lineup.bench.forEach((p, i) => {
+
+      let d = btn(
+        playerLabel(p)
+      );
+
+
+      // Same visual style as
+      // selected Starting XI players
+      d.style.background = "#90ee90";
+
+
+      d.onclick = () => {
+
+        lineup.bench =
+          lineup.bench.filter(
+            x => x.id !== p.id
+          );
+
+
         render();
+
       };
 
+
       right.appendChild(d);
+
     });
+
   }
+
+
+  // ============================
+  // BORROWED PLAYERS PANEL
+  // ============================
+
+  let borrowedPanel =
+    document.createElement("div");
+
+
+  borrowedPanel.style.marginTop = "15px";
+  borrowedPanel.style.border =
+    "1px solid #c7d7e8";
+  borrowedPanel.style.borderRadius = "12px";
+  borrowedPanel.style.overflow = "hidden";
+  borrowedPanel.style.background =
+    "#f1f4f6";
+
+
+  // ============================
+  // BORROWED HEADER
+  // ============================
+
+  let borrowedHeader =
+    document.createElement("button");
+
+
+  borrowedHeader.style.width = "100%";
+  borrowedHeader.style.border = "none";
+  borrowedHeader.style.background =
+    "#f1f4f6";
+  borrowedHeader.style.padding = "14px";
+  borrowedHeader.style.textAlign = "left";
+  borrowedHeader.style.cursor = "pointer";
+  borrowedHeader.style.display = "flex";
+  borrowedHeader.style.alignItems = "center";
+  borrowedHeader.style.justifyContent =
+    "space-between";
+  borrowedHeader.style.boxSizing =
+    "border-box";
+
+
+  let borrowedHeaderText =
+    document.createElement("div");
+
+
+  borrowedHeaderText.style.flex = "1";
+
+
+  let borrowedTitle =
+    document.createElement("div");
+
+
+  borrowedTitle.style.fontSize = "19px";
+  borrowedTitle.style.fontWeight = "bold";
+  borrowedTitle.style.color =
+    "#1E3A5F";
+
+
+  let borrowedDescription =
+    document.createElement("div");
+
+
+  borrowedDescription.style.fontSize =
+    "13px";
+
+  borrowedDescription.style.color =
+    "#555";
+
+  borrowedDescription.style.marginTop =
+    "4px";
+
+  borrowedDescription.innerText =
+    "View available borrowed players or add a new borrowed player";
+
+
+  let borrowedArrow =
+    document.createElement("div");
+
+
+  borrowedArrow.style.fontSize =
+    "24px";
+
+  borrowedArrow.style.color =
+    "#1E3A5F";
+
+  borrowedArrow.style.marginLeft =
+    "10px";
+
+
+  borrowedHeaderText.appendChild(
+    borrowedTitle
+  );
+
+  borrowedHeaderText.appendChild(
+    borrowedDescription
+  );
+
+  borrowedHeader.appendChild(
+    borrowedHeaderText
+  );
+
+  borrowedHeader.appendChild(
+    borrowedArrow
+  );
+
+
+  // ============================
+  // BORROWED CONTENT
+  // ============================
+
+  let borrowedContent =
+    document.createElement("div");
+
+
+  borrowedContent.style.display =
+    "none";
+
+  borrowedContent.style.padding =
+    "12px";
+
+  borrowedContent.style.background =
+    "#ffffff";
+
+  borrowedContent.style.borderTop =
+    "1px solid #d9e2ec";
+
+
+  // ============================
+  // AVAILABLE BORROWED PLAYERS
+  // ============================
+
+  function getAvailableBorrowedPlayers(){
+
+    return borrowedPlayers.filter(p => {
+
+      // Not already a starter
+      if(
+        lineup.starters.find(
+          x => x.id === p.id
+        )
+      ){
+        return false;
+      }
+
+
+      // Not already on bench
+      if(
+        lineup.bench.find(
+          x => x.id === p.id
+        )
+      ){
+        return false;
+      }
+
+
+      return true;
+
+    });
+
+  }
+
+
+  // ============================
+  // UPDATE HEADER
+  // ============================
+
+  function updateBorrowedHeader(){
+
+    let available =
+      getAvailableBorrowedPlayers();
+
+
+    borrowedTitle.innerText =
+      `👥 Borrowed Players (${available.length})`;
+
+
+    if(
+      borrowedContent.style.display ===
+      "none"
+    ){
+
+      borrowedArrow.innerText =
+        "▼";
+
+    } else {
+
+      borrowedArrow.innerText =
+        "▲";
+
+    }
+
+  }
+
+
+  // ============================
+  // RENDER BORROWED CONTENT
+  // ============================
+
+  function renderBorrowedContent(){
+
+    borrowedContent.innerHTML = "";
+
+
+    let available =
+      getAvailableBorrowedPlayers();
+
+
+    // ============================
+    // SEARCH
+    // ============================
+
+    let search =
+      document.createElement("input");
+
+
+    search.type = "text";
+
+    search.placeholder =
+      "Search borrowed players...";
+
+
+    search.style.width = "100%";
+
+    search.style.boxSizing =
+      "border-box";
+
+    search.style.padding =
+      "12px";
+
+    search.style.fontSize =
+      "16px";
+
+    search.style.border =
+      "1px solid #ccd6e0";
+
+    search.style.borderRadius =
+      "8px";
+
+    search.style.marginBottom =
+      "12px";
+
+
+    borrowedContent.appendChild(
+      search
+    );
+
+
+    let playerList =
+      document.createElement("div");
+
+
+    function renderList(filter = ""){
+
+      playerList.innerHTML = "";
+
+
+      let filtered =
+        available.filter(p => {
+
+          let text =
+            (
+              p.name +
+              " " +
+              p.number +
+              " " +
+              p.normalTeam
+            ).toLowerCase();
+
+
+          return text.includes(
+            filter.toLowerCase()
+          );
+
+        });
+
+
+      if(filtered.length === 0){
+
+        let empty =
+          document.createElement("div");
+
+
+        empty.innerText =
+          available.length === 0
+            ? "No borrowed players available for this match."
+            : "No borrowed players match your search.";
+
+
+        empty.style.textAlign =
+          "center";
+
+        empty.style.padding =
+          "15px";
+
+        empty.style.color =
+          "#666";
+
+
+        playerList.appendChild(
+          empty
+        );
+
+
+      } else {
+
+        filtered.forEach(p => {
+
+          let row =
+            document.createElement("div");
+
+
+          row.style.display =
+            "flex";
+
+          row.style.alignItems =
+            "center";
+
+          row.style.justifyContent =
+            "space-between";
+
+          row.style.padding =
+            "10px";
+
+          row.style.marginBottom =
+            "8px";
+
+          row.style.background =
+            "#f1f4f6";
+
+          row.style.borderRadius =
+            "8px";
+
+
+          let playerInfo =
+            document.createElement("div");
+
+
+          playerInfo.style.flex =
+            "1";
+
+
+          let playerName =
+            document.createElement("div");
+
+
+          playerName.innerText =
+            `${p.number} - ${p.name}`;
+
+
+          playerName.style.fontWeight =
+            "bold";
+
+          playerName.style.color =
+            "#243447";
+
+
+          let playerTeam =
+            document.createElement("div");
+
+
+          playerTeam.innerText =
+            p.normalTeam || "";
+
+
+          playerTeam.style.fontSize =
+            "12px";
+
+          playerTeam.style.color =
+            "#666";
+
+          playerTeam.style.marginTop =
+            "2px";
+
+
+          playerInfo.appendChild(
+            playerName
+          );
+
+          playerInfo.appendChild(
+            playerTeam
+          );
+
+
+          let addBtn =
+            document.createElement("button");
+
+
+          addBtn.innerText = "+";
+
+
+          addBtn.style.width =
+            "42px";
+
+          addBtn.style.height =
+            "42px";
+
+          addBtn.style.borderRadius =
+            "50%";
+
+          addBtn.style.border =
+            "none";
+
+          addBtn.style.background =
+            "#1E3A5F";
+
+          addBtn.style.color =
+            "white";
+
+          addBtn.style.fontSize =
+            "24px";
+
+          addBtn.style.fontWeight =
+            "bold";
+
+          addBtn.style.cursor =
+            "pointer";
+
+
+          addBtn.onclick = () => {
+
+            if(
+              lineup.bench.length >= 6
+            ){
+              return;
+            }
+
+
+            lineup.bench.push({
+              id: p.id,
+              number: p.number,
+              name: p.name,
+              normalTeam: p.normalTeam || "",
+              borrowed: true
+            });
+
+
+            render();
+
+            renderBorrowedContent();
+
+            updateBorrowedHeader();
+
+          };
+
+
+          row.appendChild(
+            playerInfo
+          );
+
+          row.appendChild(
+            addBtn
+          );
+
+
+          playerList.appendChild(
+            row
+          );
+
+        });
+
+      }
+
+    }
+
+
+    renderList();
+
+
+    search.oninput = () => {
+
+      renderList(
+        search.value
+      );
+
+    };
+
+
+    borrowedContent.appendChild(
+      playerList
+    );
+
+
+    // ============================
+    // ADD NEW BORROWED PLAYER
+    // ============================
+
+    let addNewBtn =
+      document.createElement("button");
+
+
+    addNewBtn.innerText =
+      "＋ Add New Borrowed Player";
+
+
+    addNewBtn.style.width =
+      "100%";
+
+    addNewBtn.style.padding =
+      "12px";
+
+    addNewBtn.style.marginTop =
+      "8px";
+
+    addNewBtn.style.fontSize =
+      "16px";
+
+    addNewBtn.style.fontWeight =
+      "bold";
+
+    addNewBtn.style.background =
+      "white";
+
+    addNewBtn.style.color =
+      "#1E3A5F";
+
+    addNewBtn.style.border =
+      "1px solid #9db7d1";
+
+    addNewBtn.style.borderRadius =
+      "8px";
+
+    addNewBtn.style.cursor =
+      "pointer";
+
+
+    addNewBtn.onclick = () => {
+
+      addBorrowedPlayer();
+
+    };
+
+
+    borrowedContent.appendChild(
+      addNewBtn
+    );
+
+  }
+
+
+  // ============================
+  // OPEN / CLOSE PANEL
+  // ============================
+
+  borrowedHeader.onclick = () => {
+
+    let isOpen =
+      borrowedContent.style.display !==
+      "none";
+
+
+    if(isOpen){
+
+      borrowedContent.style.display =
+        "none";
+
+    } else {
+
+      borrowedContent.style.display =
+        "block";
+
+      renderBorrowedContent();
+
+    }
+
+
+    updateBorrowedHeader();
+
+  };
+
+
+  updateBorrowedHeader();
+
+
+  borrowedPanel.appendChild(
+    borrowedHeader
+  );
+
+  borrowedPanel.appendChild(
+    borrowedContent
+  );
+
+
+  // ============================
+  // ACCEPT BENCH
+  // ============================
+
+  let accept =
+    document.createElement("button");
+
+
+  accept.innerText =
+    "ACCEPT BENCH";
+
+
+  accept.onclick = () => {
+
+    if(lineup.bench.length < 6){
+
+      let confirmShort =
+        confirm(
+          `You selected only ${lineup.bench.length} subs. Continue?`
+        );
+
+
+      if(!confirmShort){
+        return;
+      }
+
+    }
+
+
+    // SAVE MATCH SQUAD
+    matchSquad = [
+
+      ...lineup.starters.map(
+        p => p.name
+      ),
+
+      ...lineup.bench.map(
+        p => p.name
+      )
+
+    ];
+
+
+    renderPitch();
+
+    closePopup();
+
+  };
+
+
+  // ============================
+  // BUILD SCREEN
+  // ============================
+
+  wrap.appendChild(left);
+
+  wrap.appendChild(right);
+
+  mainBox.appendChild(wrap);
+
+  mainBox.appendChild(
+    borrowedPanel
+  );
+
+    mainBox.appendChild(
+    accept
+  );
 
   render();
 
-let accept=document.createElement("button");
-accept.innerText="ACCEPT BENCH";
-
-accept.onclick=()=>{
-
-  if(lineup.bench.length < 6){
-
-    let confirmShort = confirm(
-      `You selected only ${lineup.bench.length} subs. Continue?`
-    );
-
-    if(!confirmShort){
-      return;
-    }
-  }
-
-  // ✅ SAVE MATCH SQUAD HERE
-matchSquad = [
-  ...lineup.starters.map(p => p.name),
-  ...lineup.bench.map(p => p.name)
-];
-
-renderPitch();
-
-closePopup();
-};
-
-  wrap.appendChild(left);
-  wrap.appendChild(right);
-  mainBox.appendChild(wrap);
-  mainBox.appendChild(accept);
 }
 
 // ============================
@@ -948,7 +2082,7 @@ mainBox.appendChild(btnRow);
 
 activePlayers.forEach(p=>{
   if(!p.id) return;
-  let d = btn(p.name);
+  let d = btn(playerLabel(p));
 
   d.onclick = () => {
     if(type === "Goal"){
@@ -1027,7 +2161,7 @@ none.onclick = () => {
   }
 
   // ✅ NORMAL PLAYERS (clickable)
-  let d = btn(p.name);
+  let d = btn(playerLabel(p));
 
   d.onclick = () => {
     logEvent(team, "Goal", scorer.name, p.name);
@@ -1059,7 +2193,7 @@ function selectOwnGoalAssist(team){
   mainBox.appendChild(none);
 
   activePlayers.forEach(p=>{
-    let d = btn(p.name);
+    let d = btn(playerLabel(p));
 
     d.onclick = () => {
       logEvent(team, "Own Goal", "", p.name);
@@ -1135,7 +2269,7 @@ activePlayers.forEach(p=>{
 
   if(!p.id) return;
 
-  let d = btn(p.name);
+  let d = btn(playerLabel(p));
 
   d.onclick = ()=>{
 
@@ -1172,7 +2306,7 @@ function selectPenaltyTaker(team, wonBy){
 
     if(!p.id) return;
 
-    let d = btn(p.name);
+    let d = btn(playerLabel(p));
 
     d.onclick = ()=>{
 
@@ -2768,7 +3902,7 @@ mainBox.appendChild(cancel);
 
   if(!p.id || p.red) return; // 🚫 ADD THIS LINE
 
-  let d = btn(p.name);
+  let d = btn(playerLabel(p));
 
     d.onclick = ()=>{
 
@@ -2822,7 +3956,7 @@ mainBox.appendChild(cancel);
 
     if(sub.red) return;
 
-    let b = btn(sub.name);
+    let b = btn(playerLabel(sub));
 
     // USED PLAYER
     if(usedPlayers.includes(
