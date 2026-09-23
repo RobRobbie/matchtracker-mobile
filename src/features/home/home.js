@@ -25,7 +25,9 @@
   let callbacks = {
     onPreSeason: null,
     onSeason: null,
-    onSettings: null
+    onSettings: null,
+    onSquad: null,
+    onOpponents: null
   };
 
   // ----------------------------------------------------------
@@ -44,10 +46,9 @@
         ? options.onSeason
         : null;
 
-    callbacks.onSettings =
-      typeof options.onSettings === "function"
-        ? options.onSettings
-        : null;
+    callbacks.onSettings = typeof options.onSettings === "function" ? options.onSettings : null;
+    callbacks.onSquad = typeof options.onSquad === "function" ? options.onSquad : null;
+    callbacks.onOpponents = typeof options.onOpponents === "function" ? options.onOpponents : null;
   }
 
   // ----------------------------------------------------------
@@ -141,6 +142,31 @@
     });
 
     container.appendChild(seasonCard);
+
+    // --------------------------------------------------------
+    // TEAM MANAGEMENT
+    // --------------------------------------------------------
+
+    const managementHeading = document.createElement("div");
+    managementHeading.innerText = "TEAM MANAGEMENT";
+    managementHeading.style.cssText = "font-size:13px;font-weight:800;letter-spacing:1.5px;margin:26px 4px 10px;color:" + COLORS.darkText;
+    container.appendChild(managementHeading);
+
+    container.appendChild(createFeatureCard({
+      title: "SQUAD",
+      description: "Add and manage your players at any time. Players can also be added while preparing a match.",
+      buttonText: "Open Squad",
+      accent: COLORS.navy,
+      onClick: callbacks.onSquad
+    }));
+
+    container.appendChild(createFeatureCard({
+      title: "OPPONENTS",
+      description: "Keep a reusable list of opponents. Add a new opponent whenever you need one.",
+      buttonText: "Open Opponents",
+      accent: COLORS.blueGreen,
+      onClick: callbacks.onOpponents
+    }));
 
     // --------------------------------------------------------
     // QUICK ACCESS

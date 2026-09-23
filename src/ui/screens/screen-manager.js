@@ -29,6 +29,8 @@
   let preseasonContainer = null;
 
   let newPreSeasonMatchContainer = null;
+  let squadContainer = null;
+  let opponentsContainer = null;
 
 
   // ----------------------------------------------------------
@@ -97,6 +99,15 @@
   }
 
 
+  function createSimpleContainer(id) {
+    const container = document.createElement("div");
+    container.id = id;
+    container.style.display = "none";
+    document.body.appendChild(container);
+    return container;
+  }
+
+
   // ----------------------------------------------------------
   // HIDE ALL NEW SCREENS
   // ----------------------------------------------------------
@@ -119,12 +130,9 @@
     }
 
 
-    if (newPreSeasonMatchContainer) {
-
-      newPreSeasonMatchContainer.style.display =
-        "none";
-
-    }
+    if (newPreSeasonMatchContainer) newPreSeasonMatchContainer.style.display = "none";
+    if (squadContainer) squadContainer.style.display = "none";
+    if (opponentsContainer) opponentsContainer.style.display = "none";
 
   }
 
@@ -168,11 +176,15 @@
 
 
         onSettings: function () {
+          console.log("MatchTracker: Settings screen not connected yet.");
+        },
 
-          console.log(
-            "MatchTracker: Settings screen not connected yet."
-          );
+        onSquad: function () {
+          showSquad();
+        },
 
+        onOpponents: function () {
+          showOpponents();
         }
 
       });
@@ -230,6 +242,36 @@
 
     }
 
+  }
+
+
+  // ----------------------------------------------------------
+  // SHOW SQUAD
+  // ----------------------------------------------------------
+
+  function showSquad() {
+    if (!squadContainer) squadContainer = createSimpleContainer("matchtrackerSquad");
+    hideAllScreens();
+    squadContainer.style.display = "block";
+    if (window.MatchTrackerSquad) {
+      window.MatchTrackerSquad.init({ onBack: showHome });
+      window.MatchTrackerSquad.render(squadContainer);
+    }
+  }
+
+
+  // ----------------------------------------------------------
+  // SHOW OPPONENTS
+  // ----------------------------------------------------------
+
+  function showOpponents() {
+    if (!opponentsContainer) opponentsContainer = createSimpleContainer("matchtrackerOpponents");
+    hideAllScreens();
+    opponentsContainer.style.display = "block";
+    if (window.MatchTrackerOpponents) {
+      window.MatchTrackerOpponents.init({ onBack: showHome });
+      window.MatchTrackerOpponents.render(opponentsContainer);
+    }
   }
 
 

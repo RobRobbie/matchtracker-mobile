@@ -1,18 +1,15 @@
 // ============================================================
 // MATCHTRACKER — PRE SEASON FEATURE
 // ============================================================
-// Pre Season screen only.
+// Pre Season home screen.
 //
-// This module will eventually handle:
-// - Standalone pre-season matches
-// - Opponent selection
-// - Pre-season squad management
-// - Starting XI and substitutes
-// - Match statistics
-// - Match reports
+// Current responsibility:
+// - Create a new Pre Season match
+// - Show upcoming matches
+// - Show previous/completed matches
 //
-// Existing match logic is NOT moved here yet.
-// We are building the new feature safely in stages.
+// Match creation and match data remain handled by their
+// dedicated service/model modules.
 // ============================================================
 
 (function () {
@@ -122,8 +119,7 @@
     // NEW MATCH CARD
     // --------------------------------------------------------
 
-    const newMatchCard =
-      document.createElement("div");
+    const newMatchCard = document.createElement("div");
 
     newMatchCard.style.background = COLORS.white;
     newMatchCard.style.borderRadius = "18px";
@@ -135,21 +131,16 @@
       "6px solid " + COLORS.blueGreen;
     newMatchCard.style.boxSizing = "border-box";
 
-    const newMatchTitle =
-      document.createElement("div");
+    const newMatchTitle = document.createElement("div");
 
-    newMatchTitle.innerText =
-      "NEW PRE-SEASON MATCH";
-
+    newMatchTitle.innerText = "NEW PRE-SEASON MATCH";
     newMatchTitle.style.fontSize = "20px";
     newMatchTitle.style.fontWeight = "800";
     newMatchTitle.style.color = COLORS.darkText;
 
     newMatchCard.appendChild(newMatchTitle);
 
-
-    const newMatchDescription =
-      document.createElement("div");
+    const newMatchDescription = document.createElement("div");
 
     newMatchDescription.innerText =
       "Create a standalone match and choose the opponent for this game.";
@@ -160,32 +151,23 @@
     newMatchDescription.style.marginTop = "8px";
     newMatchDescription.style.marginBottom = "16px";
 
-    newMatchCard.appendChild(
-      newMatchDescription
-    );
+    newMatchCard.appendChild(newMatchDescription);
 
-
-    const newMatchButton =
-      document.createElement("button");
+    const newMatchButton = document.createElement("button");
 
     newMatchButton.type = "button";
-    newMatchButton.innerText =
-      "＋  New Pre-Season Match";
-
+    newMatchButton.innerText = "＋  New Pre-Season Match";
     newMatchButton.style.width = "100%";
     newMatchButton.style.minHeight = "54px";
     newMatchButton.style.border = "none";
     newMatchButton.style.borderRadius = "12px";
-    newMatchButton.style.background =
-      COLORS.blueGreen;
-    newMatchButton.style.color =
-      COLORS.white;
+    newMatchButton.style.background = COLORS.blueGreen;
+    newMatchButton.style.color = COLORS.white;
     newMatchButton.style.fontSize = "16px";
     newMatchButton.style.fontWeight = "800";
     newMatchButton.style.cursor = "pointer";
 
     newMatchButton.onclick = function () {
-
       if (callbacks.onNewMatch) {
         callbacks.onNewMatch();
       } else {
@@ -193,101 +175,39 @@
           "MatchTracker Pre Season: New Match not connected yet."
         );
       }
-
     };
 
-    newMatchCard.appendChild(
-      newMatchButton
-    );
-
-    container.appendChild(
-      newMatchCard
-    );
+    newMatchCard.appendChild(newMatchButton);
+    container.appendChild(newMatchCard);
 
 
     // --------------------------------------------------------
-    // PREVIOUS MATCHES
+    // UPCOMING / PREVIOUS MATCHES
     // --------------------------------------------------------
 
-    const previousCard =
-      document.createElement("div");
+    renderSavedMatches(container);
 
-    previousCard.style.background =
-      COLORS.white;
-    previousCard.style.borderRadius =
-      "18px";
-    previousCard.style.padding =
-      "20px";
-    previousCard.style.marginBottom =
-      "20px";
-    previousCard.style.boxShadow =
-      "0 4px 12px rgba(0,0,0,0.07)";
-
-    previousCard.innerHTML = `
-      <div style="
-        font-size:20px;
-        font-weight:800;
-        color:${COLORS.darkText};
-      ">
-        PREVIOUS MATCHES
-      </div>
-
-      <div style="
-        font-size:14px;
-        line-height:1.5;
-        color:#5C6B78;
-        margin-top:8px;
-      ">
-        Completed pre-season matches will appear here.
-      </div>
-
-      <div style="
-        margin-top:16px;
-        padding:16px;
-        border:1px dashed ${COLORS.silver};
-        border-radius:12px;
-        text-align:center;
-        color:#71808C;
-        font-size:14px;
-      ">
-        No pre-season matches yet.
-      </div>
-    `;
-
-    container.appendChild(
-      previousCard
-    );
-
-    renderSavedMatches(
-  container
-);
 
     // --------------------------------------------------------
     // BACK BUTTON
     // --------------------------------------------------------
 
-    const backButton =
-      document.createElement("button");
+    const backButton = document.createElement("button");
 
     backButton.type = "button";
-    backButton.innerText =
-      "←  Back to Home";
-
+    backButton.innerText = "←  Back to Home";
     backButton.style.width = "100%";
     backButton.style.minHeight = "52px";
     backButton.style.border =
       "1px solid " + COLORS.silver;
     backButton.style.borderRadius = "12px";
-    backButton.style.background =
-      COLORS.white;
-    backButton.style.color =
-      COLORS.darkText;
+    backButton.style.background = COLORS.white;
+    backButton.style.color = COLORS.darkText;
     backButton.style.fontSize = "16px";
     backButton.style.fontWeight = "800";
     backButton.style.cursor = "pointer";
 
     backButton.onclick = function () {
-
       if (callbacks.onBack) {
         callbacks.onBack();
       } else {
@@ -295,24 +215,144 @@
           "MatchTracker Pre Season: Back not connected yet."
         );
       }
-
     };
 
-    container.appendChild(
-      backButton
-    );
-
+    container.appendChild(backButton);
   }
 
+
   // ----------------------------------------------------------
-// RENDER SAVED MATCHES
-// ----------------------------------------------------------
+  // RENDER MATCH SECTION
+  // ----------------------------------------------------------
 
-function renderSavedMatches(container) {
+  function renderMatchSection(
+    container,
+    titleText,
+    descriptionText,
+    matches,
+    emptyText,
+    options = {}
+  ) {
 
-    if (
-      !window.MatchTrackerPreSeasonService
-    ) {
+    const sectionCard = document.createElement("div");
+
+    sectionCard.style.background = COLORS.white;
+    sectionCard.style.borderRadius = "18px";
+    sectionCard.style.padding = "20px";
+    sectionCard.style.marginBottom = "20px";
+    sectionCard.style.boxShadow =
+      "0 4px 12px rgba(0,0,0,0.07)";
+
+    const title = document.createElement("div");
+
+    title.innerText = titleText;
+    title.style.fontSize = "20px";
+    title.style.fontWeight = "800";
+    title.style.color = COLORS.darkText;
+
+    sectionCard.appendChild(title);
+
+    const description = document.createElement("div");
+
+    description.innerText = descriptionText;
+    description.style.fontSize = "14px";
+    description.style.lineHeight = "1.5";
+    description.style.color = "#5C6B78";
+    description.style.marginTop = "8px";
+
+    sectionCard.appendChild(description);
+
+    if (!matches || matches.length === 0) {
+
+      const empty = document.createElement("div");
+
+      empty.innerText = emptyText;
+      empty.style.marginTop = "16px";
+      empty.style.padding = "16px";
+      empty.style.border =
+        "1px dashed " + COLORS.silver;
+      empty.style.borderRadius = "12px";
+      empty.style.textAlign = "center";
+      empty.style.color = "#71808C";
+      empty.style.fontSize = "14px";
+
+      sectionCard.appendChild(empty);
+
+    } else {
+
+      const list = document.createElement("div");
+      list.style.marginTop = "16px";
+
+      matches.forEach(function (match) {
+
+        const matchRow = document.createElement("div");
+
+        matchRow.style.border = "1px solid #E1E6EA";
+        matchRow.style.borderRadius = "12px";
+        matchRow.style.padding = "16px";
+        matchRow.style.marginBottom = "12px";
+        matchRow.style.background = COLORS.lightGrey;
+
+        const opponent = document.createElement("div");
+
+        opponent.innerText =
+          "vs " + (match.opponent || "Opponent TBC");
+
+        opponent.style.fontSize = "18px";
+        opponent.style.fontWeight = "800";
+        opponent.style.color = COLORS.darkText;
+
+        const details = document.createElement("div");
+
+        details.innerText = [
+          match.date || "Date TBC",
+          match.kickOff || "Kick Off TBC",
+          match.venue || "Venue TBC"
+        ].join(" • ");
+
+        details.style.fontSize = "14px";
+        details.style.color = "#5C6B78";
+        details.style.marginTop = "6px";
+
+        matchRow.appendChild(opponent);
+        matchRow.appendChild(details);
+
+        if (options.showStatus !== false) {
+
+          const status = document.createElement("div");
+
+          status.innerText =
+            (match.status || "setup").toUpperCase();
+
+          status.style.display = "inline-block";
+          status.style.marginTop = "10px";
+          status.style.padding = "5px 10px";
+          status.style.borderRadius = "20px";
+          status.style.background = COLORS.navy;
+          status.style.color = COLORS.white;
+          status.style.fontSize = "12px";
+          status.style.fontWeight = "800";
+
+          matchRow.appendChild(status);
+        }
+
+        list.appendChild(matchRow);
+      });
+
+      sectionCard.appendChild(list);
+    }
+
+    container.appendChild(sectionCard);
+  }
+
+
+  // ----------------------------------------------------------
+  // RENDER SAVED MATCHES
+  // ----------------------------------------------------------
+
+  function renderSavedMatches(container) {
+
+    if (!window.MatchTrackerPreSeasonService) {
       console.error(
         "MatchTrackerPreSeason: Match service not available."
       );
@@ -327,157 +367,49 @@ function renderSavedMatches(container) {
       matches
     );
 
+    // Matches become Previous only when the match workflow marks
+    // them completed/complete/finished. New setup records therefore
+    // remain in Upcoming until the match is actually completed.
+    const previousStatuses = [
+      "completed",
+      "complete",
+      "finished"
+    ];
 
-    // --------------------------------------------------------
-    // MATCH LIST
-    // --------------------------------------------------------
-
-    if (!matches || matches.length === 0) {
-      return;
-    }
-
-
-    const matchesCard =
-      document.createElement("div");
-
-    matchesCard.style.background =
-      COLORS.white;
-
-    matchesCard.style.borderRadius =
-      "18px";
-
-    matchesCard.style.padding =
-      "20px";
-
-    matchesCard.style.marginBottom =
-      "20px";
-
-    matchesCard.style.boxShadow =
-      "0 4px 12px rgba(0,0,0,0.07)";
-
-
-    const title =
-      document.createElement("div");
-
-    title.innerText =
-      "SAVED PRE-SEASON MATCHES";
-
-    title.style.fontSize =
-      "20px";
-
-    title.style.fontWeight =
-      "800";
-
-    title.style.color =
-      COLORS.darkText;
-
-    title.style.marginBottom =
-      "16px";
-
-
-    matchesCard.appendChild(title);
-
-
-    matches.forEach(function(match) {
-
-      const matchRow =
-        document.createElement("div");
-
-      matchRow.style.border =
-        "1px solid #E1E6EA";
-
-      matchRow.style.borderRadius =
-        "12px";
-
-      matchRow.style.padding =
-        "16px";
-
-      matchRow.style.marginBottom =
-        "12px";
-
-      matchRow.style.background =
-        COLORS.lightGrey;
-
-
-      const opponent =
-        document.createElement("div");
-
-      opponent.innerText =
-        "vs " + (match.opponent || "Opponent TBC");
-
-      opponent.style.fontSize =
-        "18px";
-
-      opponent.style.fontWeight =
-        "800";
-
-      opponent.style.color =
-        COLORS.darkText;
-
-
-      const details =
-        document.createElement("div");
-
-      details.innerText =
-        [
-          match.date || "Date TBC",
-          match.kickOff || "Kick Off TBC",
-          match.venue || "Venue TBC"
-        ].join(" • ");
-
-      details.style.fontSize =
-        "14px";
-
-      details.style.color =
-        "#5C6B78";
-
-      details.style.marginTop =
-        "6px";
-
-
-      const status =
-        document.createElement("div");
-
-      status.innerText =
-        (match.status || "planned").toUpperCase();
-
-      status.style.display =
-        "inline-block";
-
-      status.style.marginTop =
-        "10px";
-
-      status.style.padding =
-        "5px 10px";
-
-      status.style.borderRadius =
-        "20px";
-
-      status.style.background =
-        COLORS.navy;
-
-      status.style.color =
-        COLORS.white;
-
-      status.style.fontSize =
-        "12px";
-
-      status.style.fontWeight =
-        "800";
-
-
-      matchRow.appendChild(opponent);
-      matchRow.appendChild(details);
-      matchRow.appendChild(status);
-
-      matchesCard.appendChild(matchRow);
-
+    const previousMatches = (matches || []).filter(function (match) {
+      return match &&
+        previousStatuses.indexOf(
+          String(match.status || "").toLowerCase()
+        ) !== -1;
     });
 
+    const upcomingMatches = (matches || []).filter(function (match) {
+      return match &&
+        previousStatuses.indexOf(
+          String(match.status || "").toLowerCase()
+        ) === -1;
+    });
 
-    container.appendChild(matchesCard);
+    renderMatchSection(
+      container,
+      "UPCOMING MATCHES",
+      "Matches that have been created and are still to be played.",
+      upcomingMatches,
+      "No upcoming pre-season matches yet."
+    );
 
+    renderMatchSection(
+      container,
+      "PREVIOUS MATCHES",
+      "Completed pre-season matches will appear here.",
+      previousMatches,
+      "No previous pre-season matches yet.",
+      {
+        showStatus: false
+      }
+    );
   }
+
 
   // ----------------------------------------------------------
   // PUBLIC MODULE

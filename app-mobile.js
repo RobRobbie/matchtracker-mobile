@@ -4,20 +4,11 @@
 // DATA
 // ============================
 
-let opponentTeams = [
-  "Brandon Park","Chisholm United","Peninsula Strikers","Noble Park United",
-  "North Caulfield","Mooroolbark","Dandenong South","Knox City",
-  "Casey Comets","Waverley City","Gippsland United"
-];
+let opponentTeams = [];
 
-let berwickPlayers = [
-  "1 - Pedro Formosa","2 - Aaron Hunter","3 - Ashley Slater","4 - Josh Scarlett","5 - Blake Pearson",
-  "6 - Philip Hawkins","7 - Sila Onye","9 - Jalil Nabizadah",
-  "11 - Jarod Blackbourn","12 - Simon Mur",
-  "15 - Fraidoon Mohammadi","16 - Tanner Kidwell","17 - Kyle Marambio","18 - Christian Cavallo",
-  "21 - Nathan Credlin",
-  "22 - Franco Federico","23 - Matthew Foschini","25 - Daniel Carnevale","31 - Harry Simmons"
-];
+// The rebuilt app starts with an empty squad.
+// Players are now created through MatchTrackerSquad and stored centrally.
+let berwickPlayers = [];
 
 // ============================
 // BORROWED PLAYERS
@@ -4344,27 +4335,8 @@ if(savedSeason){
   seasonStats = JSON.parse(savedSeason);
 }
 
-  // 🔥 NEVER BREAK TEAM SELECTION AGAIN
-try {
-
-  selectOpponent();
-
-} catch(e){
-
-  console.error("🔥 APP CRASHED:", e);
-
-  document.body.innerHTML = `
-    <div style="
-      padding:40px;
-      font-family:Arial;
-      text-align:center;
-    ">
-      <h2 style="color:red;">App Error</h2>
-      <p>Something broke during startup.</p>
-      <p>Open console (F12) to see details.</p>
-    </div>
-  `;
-}
+  // The rebuilt screen manager now controls application startup.
+  // Do not automatically enter the legacy opponent/XI flow here.
 
   document.getElementById("startBtn").onclick = startMatch;
   document.getElementById("halfBtn").onclick = endFirstHalf;

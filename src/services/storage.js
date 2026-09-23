@@ -16,7 +16,9 @@
         borrowedPlayers: "borrowedPlayers",
         lastMatch: "lastMatch",
         matchLog: "matchLog",
-        seasonStats: "seasonStats"
+        seasonStats: "seasonStats",
+        players: "matchtracker.players",
+        opponents: "matchtracker.opponents"
     });
 
     function load(key, fallback) {
@@ -127,6 +129,39 @@
             return save(KEYS.matchLog, matches);
         },
 
+
+        /*
+         * Current Squad Players
+         */
+
+        loadPlayers: function () {
+            return load(KEYS.players, []);
+        },
+
+        savePlayers: function (players) {
+            return save(KEYS.players, players);
+        },
+
+        clearPlayers: function () {
+            return remove(KEYS.players);
+        },
+
+
+        /*
+         * Opponents
+         */
+
+        loadOpponents: function () {
+            return load(KEYS.opponents, []);
+        },
+
+        saveOpponents: function (opponents) {
+            return save(KEYS.opponents, opponents);
+        },
+
+        clearOpponents: function () {
+            return remove(KEYS.opponents);
+        },
 
         /*
          * Season Statistics
