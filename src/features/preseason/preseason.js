@@ -258,6 +258,9 @@
       previousCard
     );
 
+    renderSavedMatches(
+  container
+);
 
     // --------------------------------------------------------
     // BACK BUTTON
@@ -301,6 +304,180 @@
 
   }
 
+  // ----------------------------------------------------------
+// RENDER SAVED MATCHES
+// ----------------------------------------------------------
+
+function renderSavedMatches(container) {
+
+    if (
+      !window.MatchTrackerPreSeasonService
+    ) {
+      console.error(
+        "MatchTrackerPreSeason: Match service not available."
+      );
+      return;
+    }
+
+    const matches =
+      window.MatchTrackerPreSeasonService.getMatches();
+
+    console.log(
+      "MatchTracker Pre Season: Saved matches",
+      matches
+    );
+
+
+    // --------------------------------------------------------
+    // MATCH LIST
+    // --------------------------------------------------------
+
+    if (!matches || matches.length === 0) {
+      return;
+    }
+
+
+    const matchesCard =
+      document.createElement("div");
+
+    matchesCard.style.background =
+      COLORS.white;
+
+    matchesCard.style.borderRadius =
+      "18px";
+
+    matchesCard.style.padding =
+      "20px";
+
+    matchesCard.style.marginBottom =
+      "20px";
+
+    matchesCard.style.boxShadow =
+      "0 4px 12px rgba(0,0,0,0.07)";
+
+
+    const title =
+      document.createElement("div");
+
+    title.innerText =
+      "SAVED PRE-SEASON MATCHES";
+
+    title.style.fontSize =
+      "20px";
+
+    title.style.fontWeight =
+      "800";
+
+    title.style.color =
+      COLORS.darkText;
+
+    title.style.marginBottom =
+      "16px";
+
+
+    matchesCard.appendChild(title);
+
+
+    matches.forEach(function(match) {
+
+      const matchRow =
+        document.createElement("div");
+
+      matchRow.style.border =
+        "1px solid #E1E6EA";
+
+      matchRow.style.borderRadius =
+        "12px";
+
+      matchRow.style.padding =
+        "16px";
+
+      matchRow.style.marginBottom =
+        "12px";
+
+      matchRow.style.background =
+        COLORS.lightGrey;
+
+
+      const opponent =
+        document.createElement("div");
+
+      opponent.innerText =
+        "vs " + (match.opponent || "Opponent TBC");
+
+      opponent.style.fontSize =
+        "18px";
+
+      opponent.style.fontWeight =
+        "800";
+
+      opponent.style.color =
+        COLORS.darkText;
+
+
+      const details =
+        document.createElement("div");
+
+      details.innerText =
+        [
+          match.date || "Date TBC",
+          match.kickOff || "Kick Off TBC",
+          match.venue || "Venue TBC"
+        ].join(" • ");
+
+      details.style.fontSize =
+        "14px";
+
+      details.style.color =
+        "#5C6B78";
+
+      details.style.marginTop =
+        "6px";
+
+
+      const status =
+        document.createElement("div");
+
+      status.innerText =
+        (match.status || "planned").toUpperCase();
+
+      status.style.display =
+        "inline-block";
+
+      status.style.marginTop =
+        "10px";
+
+      status.style.padding =
+        "5px 10px";
+
+      status.style.borderRadius =
+        "20px";
+
+      status.style.background =
+        COLORS.navy;
+
+      status.style.color =
+        COLORS.white;
+
+      status.style.fontSize =
+        "12px";
+
+      status.style.fontWeight =
+        "800";
+
+
+      matchRow.appendChild(opponent);
+      matchRow.appendChild(details);
+      matchRow.appendChild(status);
+
+      matchesCard.appendChild(matchRow);
+
+    });
+
+
+    container.appendChild(matchesCard);
+
+  }
 
   // ----------------------------------------------------------
   // PUBLIC MODULE
