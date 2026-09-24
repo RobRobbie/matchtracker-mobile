@@ -31,6 +31,8 @@
   let newPreSeasonMatchContainer = null;
   let squadContainer = null;
   let opponentsContainer = null;
+  let preSeasonSquadSelectionContainer = null;
+  let preSeasonStartingXIContainer = null;
 
 
   // ----------------------------------------------------------
@@ -109,6 +111,36 @@
 
 
   // ----------------------------------------------------------
+  // CREATE PRE SEASON SQUAD SELECTION CONTAINER
+  // ----------------------------------------------------------
+
+  function createPreSeasonSquadSelectionContainer() {
+    if (preSeasonSquadSelectionContainer) return preSeasonSquadSelectionContainer;
+
+    preSeasonSquadSelectionContainer = document.createElement("div");
+    preSeasonSquadSelectionContainer.id = "matchtrackerPreSeasonSquadSelection";
+    preSeasonSquadSelectionContainer.style.display = "none";
+    document.body.appendChild(preSeasonSquadSelectionContainer);
+    return preSeasonSquadSelectionContainer;
+  }
+
+
+  // ----------------------------------------------------------
+  // CREATE PRE SEASON STARTING XI CONTAINER
+  // ----------------------------------------------------------
+
+  function createPreSeasonStartingXIContainer() {
+    if (preSeasonStartingXIContainer) return preSeasonStartingXIContainer;
+
+    preSeasonStartingXIContainer = document.createElement("div");
+    preSeasonStartingXIContainer.id = "matchtrackerPreSeasonStartingXI";
+    preSeasonStartingXIContainer.style.display = "none";
+    document.body.appendChild(preSeasonStartingXIContainer);
+    return preSeasonStartingXIContainer;
+  }
+
+
+  // ----------------------------------------------------------
   // HIDE ALL NEW SCREENS
   // ----------------------------------------------------------
 
@@ -133,6 +165,8 @@
     if (newPreSeasonMatchContainer) newPreSeasonMatchContainer.style.display = "none";
     if (squadContainer) squadContainer.style.display = "none";
     if (opponentsContainer) opponentsContainer.style.display = "none";
+    if (preSeasonSquadSelectionContainer) preSeasonSquadSelectionContainer.style.display = "none";
+    if (preSeasonStartingXIContainer) preSeasonStartingXIContainer.style.display = "none";
 
   }
 
@@ -228,9 +262,25 @@
 
 
         onNewMatch: function () {
-
           showNewPreSeasonMatch();
+        },
 
+        onOpenMatch: function (match) {
+          // Enter Match opens the editable match record first.
+          // Team selection only begins when the coach chooses Start Match.
+          showEditPreSeasonMatch(match);
+        },
+
+        onEditMatch: function (match) {
+          showEditPreSeasonMatch(match);
+        },
+
+        onDeleteMatch: function (match) {
+          if (!match || !window.MatchTrackerPreSeasonService) return;
+          const opponent = match.opponent || "this match";
+          if (!window.confirm("Remove the match against " + opponent + "? This cannot be undone.")) return;
+          window.MatchTrackerPreSeasonService.deleteMatch(match.id);
+          showPreSeason();
         }
 
       });
@@ -249,12 +299,14 @@
   // SHOW SQUAD
   // ----------------------------------------------------------
 
-  function showSquad() {
+  function showSquad(options = {}) {
     if (!squadContainer) squadContainer = createSimpleContainer("matchtrackerSquad");
     hideAllScreens();
     squadContainer.style.display = "block";
     if (window.MatchTrackerSquad) {
-      window.MatchTrackerSquad.init({ onBack: showHome });
+      window.MatchTrackerSquad.init({
+        onBack: typeof options.onBack === "function" ? options.onBack : showHome
+      });
       window.MatchTrackerSquad.render(squadContainer);
     }
   }
@@ -283,6 +335,8 @@
 
     const container =
       createNewPreSeasonMatchContainer();
+    createPreSeasonSquadSelectionContainer();
+    createPreSeasonStartingXIContainer();
 
 
     hideAllScreens();
@@ -316,23 +370,12 @@
 
 
       onCreated: function (match) {
-
         console.log(
           "MatchTracker: Pre Season match created.",
           match
         );
-
-
-        // ----------------------------------------------------
-        // The next stage will take the coach from here into
-        // squad/player selection.
-        //
-        // For now we simply confirm that the match was created.
-        // ----------------------------------------------------
-
-        alert(
-          "Pre Season match created successfully."
-        );
+        // Creating a match only creates the fixture record.
+        // Team selection starts later from Enter Match → Start Match.
         showPreSeason();
       }
 
@@ -343,6 +386,110 @@
       container
     );
 
+  }
+
+
+  // ----------------------------------------------------------
+  // SHOW EDIT PRE SEASON MATCH
+  // ----------------------------------------------------------
+
+  function showEditPreSeasonMatch(match) {
+    const container = createNewPreSeasonMatchContainer();
+    hideAllScreens();
+    container.style.display = "block";
+
+    if (!window.MatchTrackerNewPreSeasonMatch) {
+      console.error("MatchTrackerScreenManager: New Pre Season Match screen not available.");
+      return;
+    }
+
+    window.MatchTrackerNewPreSeasonMatch.init({
+      match: match,
+      onCancel: function () {
+        showPreSeason();
+      },
+      onUpdated: function () {
+        showPreSeason();
+      },
+      onStartMatch: function (updatedMatch) {
+        showPreSeasonSquadSelection(updatedMatch || match);
+      },
+      onDeleteMatch: function (matchToDelete) {
+        if (!matchToDelete || !window.MatchTrackerPreSeasonService) return;
+        window.MatchTrackerPreSeasonService.deleteMatch(matchToDelete.id);
+        showPreSeason();
+      }
+    });
+
+    window.MatchTrackerNewPreSeasonMatch.render(container);
+  }
+
+
+  // ----------------------------------------------------------
+  // SHOW PRE SEASON SQUAD SELECTION
+  // ----------------------------------------------------------
+
+  function showPreSeasonSquadSelection(match) {
+    const container = createPreSeasonSquadSelectionContainer();
+    hideAllScreens();
+    container.style.display = "block";
+
+    if (!window.MatchTrackerPreSeasonSquadSelection) {
+      console.error("MatchTrackerScreenManager: Pre Season Squad Selection not available.");
+      return;
+    }
+
+    window.MatchTrackerPreSeasonSquadSelection.init({
+      match: match,
+      onCancel: function () {
+        showEditPreSeasonMatch(match);
+      },
+      onManageSquad: function () {
+        showSquad({
+          onBack: function () {
+            const refreshed = window.MatchTrackerPreSeasonService
+              ? window.MatchTrackerPreSeasonService.getMatch(match.id)
+              : match;
+            showPreSeasonSquadSelection(refreshed || match);
+          }
+        });
+      },
+      onContinue: function (updatedMatch) {
+        console.log("MatchTracker: Match squad selected.", updatedMatch);
+        showPreSeasonStartingXI(updatedMatch);
+      }
+    });
+
+    window.MatchTrackerPreSeasonSquadSelection.render(container);
+  }
+
+
+  // ----------------------------------------------------------
+  // SHOW PRE SEASON STARTING XI
+  // ----------------------------------------------------------
+
+  function showPreSeasonStartingXI(match) {
+    const container = createPreSeasonStartingXIContainer();
+    hideAllScreens();
+    container.style.display = "block";
+
+    if (!window.MatchTrackerPreSeasonStartingXI) {
+      console.error("MatchTrackerScreenManager: Pre Season Starting XI not available.");
+      return;
+    }
+
+    window.MatchTrackerPreSeasonStartingXI.init({
+      match: match,
+      onBack: function () {
+        showPreSeasonSquadSelection(match);
+      },
+      onSaved: function (updatedMatch) {
+        console.log("MatchTracker: Starting XI saved.", updatedMatch);
+        alert("Starting XI saved. Bench selection is the next stage.");
+      }
+    });
+
+    window.MatchTrackerPreSeasonStartingXI.render(container);
   }
 
 
@@ -373,6 +520,8 @@
     createPreSeasonContainer();
 
     createNewPreSeasonMatchContainer();
+    createPreSeasonSquadSelectionContainer();
+    createPreSeasonStartingXIContainer();
 
 
     // Keep the original application hidden

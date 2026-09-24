@@ -27,7 +27,10 @@
 
   let callbacks = {
     onBack: null,
-    onNewMatch: null
+    onNewMatch: null,
+    onOpenMatch: null,
+    onEditMatch: null,
+    onDeleteMatch: null
   };
 
   // ----------------------------------------------------------
@@ -44,6 +47,21 @@
     callbacks.onNewMatch =
       typeof options.onNewMatch === "function"
         ? options.onNewMatch
+        : null;
+
+    callbacks.onOpenMatch =
+      typeof options.onOpenMatch === "function"
+        ? options.onOpenMatch
+        : null;
+
+    callbacks.onEditMatch =
+      typeof options.onEditMatch === "function"
+        ? options.onEditMatch
+        : null;
+
+    callbacks.onDeleteMatch =
+      typeof options.onDeleteMatch === "function"
+        ? options.onDeleteMatch
         : null;
   }
 
@@ -221,6 +239,12 @@
   }
 
 
+  function previousStatusesForRender(match) {
+    const status = String(match && match.status || "").toLowerCase();
+    return ["completed", "complete", "finished"].indexOf(status) !== -1;
+  }
+
+
   // ----------------------------------------------------------
   // RENDER MATCH SECTION
   // ----------------------------------------------------------
@@ -317,24 +341,26 @@
         matchRow.appendChild(opponent);
         matchRow.appendChild(details);
 
-        if (options.showStatus !== false) {
+        const actionArea = document.createElement("div");
+        actionArea.style.marginTop = "14px";
 
-          const status = document.createElement("div");
+        const enterButton = document.createElement("button");
+        enterButton.type = "button";
+        enterButton.innerText = "Enter Match →";
+        enterButton.style.width = "100%";
+        enterButton.style.minHeight = "48px";
+        enterButton.style.border = "none";
+        enterButton.style.borderRadius = "10px";
+        enterButton.style.background = COLORS.blueGreen;
+        enterButton.style.color = COLORS.white;
+        enterButton.style.fontWeight = "800";
+        enterButton.style.cursor = "pointer";
+        enterButton.onclick = function () {
+          if (callbacks.onOpenMatch) callbacks.onOpenMatch(match);
+        };
 
-          status.innerText =
-            (match.status || "setup").toUpperCase();
-
-          status.style.display = "inline-block";
-          status.style.marginTop = "10px";
-          status.style.padding = "5px 10px";
-          status.style.borderRadius = "20px";
-          status.style.background = COLORS.navy;
-          status.style.color = COLORS.white;
-          status.style.fontSize = "12px";
-          status.style.fontWeight = "800";
-
-          matchRow.appendChild(status);
-        }
+        actionArea.appendChild(enterButton);
+        matchRow.appendChild(actionArea);
 
         list.appendChild(matchRow);
       });
@@ -404,9 +430,7 @@
       "Completed pre-season matches will appear here.",
       previousMatches,
       "No previous pre-season matches yet.",
-      {
-        showStatus: false
-      }
+      {}
     );
   }
 

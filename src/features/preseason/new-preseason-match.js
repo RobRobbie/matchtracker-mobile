@@ -37,6 +37,8 @@
 
     onCreated: null,
 
+    onUpdated: null,
+
     onCancel: null
 
   };
@@ -53,6 +55,26 @@
         ? options.onCreated
         : null;
 
+    callbacks.match = options.match && typeof options.match === "object"
+      ? options.match
+      : null;
+
+
+    callbacks.onUpdated =
+      typeof options.onUpdated === "function"
+        ? options.onUpdated
+        : null;
+
+    callbacks.onStartMatch =
+      typeof options.onStartMatch === "function"
+        ? options.onStartMatch
+        : null;
+
+    callbacks.onDeleteMatch =
+      typeof options.onDeleteMatch === "function"
+        ? options.onDeleteMatch
+        : null;
+
 
     callbacks.onCancel =
       typeof options.onCancel === "function"
@@ -67,6 +89,8 @@
   // ----------------------------------------------------------
 
   function render(container) {
+
+    const editingMatch = callbacks.match || null;
 
     if (!container) {
 
@@ -160,7 +184,7 @@ header.style.boxSizing =
         font-weight:800;
         line-height:1.15;
       ">
-        New Match
+        ${editingMatch ? "Edit Match Setup" : "New Match"}
       </div>
 
       <div style="
@@ -168,7 +192,7 @@ header.style.boxSizing =
         margin-top:8px;
         opacity:0.85;
       ">
-        Set up the match before selecting your squad.
+        ${editingMatch ? "Update the match details before continuing." : "Set up the match before selecting your squad."}
       </div>
 
     `;
@@ -361,6 +385,20 @@ formCard.appendChild(
 
 
     // --------------------------------------------------------
+    // LOAD EXISTING MATCH VALUES WHEN EDITING
+    // --------------------------------------------------------
+
+    if (editingMatch) {
+      opponentInput.input.value = editingMatch.opponent || "";
+      dateInput.input.value = editingMatch.date || "";
+      kickOffInput.setValue(editingMatch.kickOff || "");
+      venueInput.input.value = editingMatch.venue || "";
+      formatField.input.value = editingMatch.matchFormat || "11-a-side";
+      lengthInput.input.value = editingMatch.matchLength != null ? editingMatch.matchLength : "";
+    }
+
+
+    // --------------------------------------------------------
     // BUTTON AREA
     // --------------------------------------------------------
 
@@ -384,7 +422,7 @@ formCard.appendChild(
       "button";
 
     createButton.innerText =
-      "Create Match";
+      editingMatch ? "Save Match Changes" : "Create Match";
 
 
     stylePrimaryButton(
@@ -483,28 +521,18 @@ formCard.appendChild(
         }
 
 
-        const match =
-        window.MatchTrackerPreSeasonService.createMatch({
+        const changes = {
+          opponent: opponent,
+          date: date,
+          kickOff: kickOff,
+          venue: venue,
+          matchFormat: matchFormat,
+          matchLength: Number(matchLength)
+        };
 
-            opponent:
-              opponent,
-
-            date:
-              date,
-
-            kickOff:
-              kickOff,
-
-            venue:
-              venue,
-
-            matchFormat:
-              matchFormat,
-
-            matchLength:
-              Number(matchLength)
-
-          });
+        const match = editingMatch
+          ? window.MatchTrackerPreSeasonService.updateMatch(editingMatch.id, changes)
+          : window.MatchTrackerPreSeasonService.createMatch(changes);
 
 
         if (!match) {
@@ -518,12 +546,12 @@ formCard.appendChild(
         }
 
 
-        if (callbacks.onCreated) {
-
-          callbacks.onCreated(
-            match
-          );
-
+        if (editingMatch) {
+          if (callbacks.onUpdated) {
+            callbacks.onUpdated(match);
+          }
+        } else if (callbacks.onCreated) {
+          callbacks.onCreated(match);
         }
 
       };
@@ -532,6 +560,58 @@ formCard.appendChild(
     buttonArea.appendChild(
       createButton
     );
+
+    if (editingMatch) {
+      const startMatchButton = document.createElement("button");
+      startMatchButton.type = "button";
+      startMatchButton.innerText = "Start Match →";
+      startMatchButton.style.width = "100%";
+      startMatchButton.style.minHeight = "52px";
+      startMatchButton.style.marginTop = "10px";
+      startMatchButton.style.border = "none";
+      startMatchButton.style.borderRadius = "12px";
+      startMatchButton.style.background = COLORS.navy;
+      startMatchButton.style.color = COLORS.white;
+      startMatchButton.style.fontSize = "16px";
+      startMatchButton.style.fontWeight = "800";
+      startMatchButton.style.cursor = "pointer";
+      startMatchButton.onclick = function () {
+        let current = window.MatchTrackerPreSeasonService
+          ? window.MatchTrackerPreSeasonService.getMatch(editingMatch.id)
+          : editingMatch;
+
+        // Starting a match begins a fresh team-selection session.
+        // The coach must explicitly choose the players available for this match.
+        if (current && window.MatchTrackerPreSeasonService) {
+          current = window.MatchTrackerPreSeasonService.updateMatch(current.id, {
+            matchdaySquad: [],
+            startingXI: [],
+            substitutes: []
+          }) || current;
+        }
+
+        if (callbacks.onStartMatch) callbacks.onStartMatch(current || editingMatch);
+      };
+      buttonArea.appendChild(startMatchButton);
+
+      const removeMatchButton = document.createElement("button");
+      removeMatchButton.type = "button";
+      removeMatchButton.innerText = "Remove Match";
+      removeMatchButton.style.width = "100%";
+      removeMatchButton.style.minHeight = "46px";
+      removeMatchButton.style.marginTop = "10px";
+      removeMatchButton.style.border = "1px solid #D6A6A6";
+      removeMatchButton.style.borderRadius = "12px";
+      removeMatchButton.style.background = COLORS.white;
+      removeMatchButton.style.color = "#8A3A3A";
+      removeMatchButton.style.fontWeight = "800";
+      removeMatchButton.style.cursor = "pointer";
+      removeMatchButton.onclick = function () {
+        if (!window.confirm("Remove this match? This cannot be undone.")) return;
+        if (callbacks.onDeleteMatch) callbacks.onDeleteMatch(editingMatch);
+      };
+      buttonArea.appendChild(removeMatchButton);
+    }
 
 
     // --------------------------------------------------------
@@ -771,23 +851,34 @@ label.style.textAlign =
 
     getValue() {
 
-  const hour =
-    hourSelect.value;
+      const hour =
+        hourSelect.value;
 
-  const minute =
-    minuteSelect.value;
+      const minute =
+        minuteSelect.value;
 
-  const period =
-    periodSelect.value;
+      const period =
+        periodSelect.value;
 
-  return (
-    hour +
-    ":" +
-    minute +
-    " " +
-    period
-  );
-}
+      return (
+        hour +
+        ":" +
+        minute +
+        " " +
+        period
+      );
+    },
+
+    setValue(value) {
+      if (!value) return;
+
+      const match = String(value).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+      if (!match) return;
+
+      hourSelect.value = String(parseInt(match[1], 10));
+      minuteSelect.value = match[2];
+      periodSelect.value = match[3].toUpperCase();
+    }
   };
 }
 
