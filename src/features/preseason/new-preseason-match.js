@@ -317,31 +317,6 @@ formCard.appendChild(
 
 
     // --------------------------------------------------------
-    // MATCH FORMAT
-    // --------------------------------------------------------
-
-    const formatField =
-      createSelectField({
-
-        label:
-          "Match Format",
-
-        options: [
-          {
-            value: "11-a-side",
-            label: "11-a-side"
-          }
-        ]
-
-      });
-
-
-    formCard.appendChild(
-      formatField.wrapper
-    );
-
-
-    // --------------------------------------------------------
     // MATCH LENGTH
     // --------------------------------------------------------
 
@@ -381,7 +356,6 @@ formCard.appendChild(
       dateInput.input.value = editingMatch.date || "";
       kickOffInput.setValue(editingMatch.kickOff || "");
       venueInput.input.value = editingMatch.venue || "";
-      formatField.input.value = "11-a-side";
       lengthInput.input.value = editingMatch.matchLength != null ? editingMatch.matchLength : "";
     }
 
@@ -435,8 +409,6 @@ formCard.appendChild(
           venueInput.input.value.trim();
 
 
-        const matchFormat =
-          formatField.input.value;
 
 
         const matchLength =
@@ -514,7 +486,7 @@ formCard.appendChild(
           date: date,
           kickOff: kickOff,
           venue: venue,
-          matchFormat: matchFormat,
+          matchFormat: "11-a-side",
           matchLength: Number(matchLength)
         };
 
@@ -883,6 +855,11 @@ label.style.textAlign =
 
     wrapper.style.marginBottom =
       "18px";
+    wrapper.style.width = "100%";
+    wrapper.style.maxWidth = "100%";
+    wrapper.style.minWidth = "0";
+    wrapper.style.boxSizing = "border-box";
+    wrapper.style.overflow = "hidden";
 
 
     const label =
@@ -925,6 +902,12 @@ label.style.textAlign =
 
     input.style.width =
       "100%";
+    input.style.maxWidth = "100%";
+    input.style.display = "block";
+    input.style.minWidth = "0";
+    input.style.flex = "1 1 auto";
+    input.style.appearance = "none";
+    input.style.webkitAppearance = "none";
 
     input.style.minHeight =
       "50px";

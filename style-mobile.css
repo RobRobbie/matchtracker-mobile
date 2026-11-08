@@ -606,3 +606,838 @@ body > button {
   font-weight:bold;
   margin:20px;
 }
+
+
+/* =========================================================
+   MATCHTRACKER 2027.003 — VISUAL POLISH
+   Scoped to the new Home and Pre Season screens.
+   Existing match/live styles remain untouched.
+   ========================================================= */
+#matchtrackerHome, #matchtrackerPreSeason {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.mt-home { max-width: 920px; margin: 0 auto; }
+.mt-home-hero {
+  min-height: 205px; box-sizing: border-box; padding: 27px 25px 24px;
+  border-radius: 22px; overflow: hidden; position: relative; color: #fff;
+  background: linear-gradient(90deg,rgba(10,31,51,.96),rgba(30,58,95,.72) 58%,rgba(12,38,58,.30)),url("assets/stadium-scene.svg") center 48%/cover;
+  box-shadow: 0 10px 24px rgba(17,42,65,.20); margin-bottom: 18px;
+  display:flex; flex-direction:column; justify-content:center;
+}
+.mt-brand { font-size:11px; font-weight:800; letter-spacing:3px; opacity:.82; }
+.mt-home-title { font-size:clamp(30px,6vw,42px); font-weight:850; letter-spacing:-1.2px; margin-top:8px; }
+.mt-home-subtitle { font-size:14px; margin-top:5px; opacity:.9; }
+.mt-hero-rule { width:82px; height:4px; border-radius:9px; background:#3F7D70; margin-top:17px; }
+.mt-home-primary-grid, .mt-home-secondary-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:13px; }
+.mt-feature-card {
+  display:flex; align-items:center; gap:12px; width:100%; min-height:112px;
+  padding:17px 15px; border:1px solid rgba(30,58,95,.08); border-radius:18px;
+  background:linear-gradient(145deg,#fff,#f8fafb); color:#243447; text-align:left;
+  box-shadow:0 5px 14px rgba(28,52,75,.09); cursor:pointer;
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.mt-feature-card:active { transform:scale(.985); }
+.mt-feature-icon { display:flex; align-items:center; justify-content:center; flex:0 0 42px; height:42px; border-radius:13px; color:var(--mt-accent); background:rgba(63,125,112,.10); font-size:29px; font-weight:700; }
+.mt-feature-copy { display:flex; flex:1; flex-direction:column; gap:5px; min-width:0; }
+.mt-feature-copy strong { font-size:17px; font-weight:800; letter-spacing:-.25px; }
+.mt-feature-copy small { color:#637180; font-size:12px; line-height:1.35; }
+.mt-card-chevron { color:#3F7D70; font-size:28px; font-weight:500; line-height:1; }
+.mt-section-label { margin:23px 4px 10px; color:#647384; font-size:10px; font-weight:850; letter-spacing:2px; }
+.mt-home-secondary-grid .mt-feature-card { min-height:92px; }
+.mt-settings-button {
+  display:flex; align-items:center; gap:12px; width:100%; min-height:54px;
+  margin:17px 0 0; padding:0 16px; border:1px solid #d8e0e7; border-radius:15px;
+  background:#fff; color:#243447; box-shadow:0 3px 10px rgba(28,52,75,.06);
+  font-weight:750; text-align:left;
+}
+.mt-settings-icon { color:#3F7D70; font-size:20px; }
+.mt-settings-button .mt-card-chevron { margin-left:auto; }
+.mt-build-info { display:flex; flex-direction:column; align-items:center; gap:3px; padding:17px 8px 5px; color:#71808c; font-size:10px; letter-spacing:.2px; }
+.mt-build-info strong { color:#1E3A5F; font-size:11px; }
+#matchtrackerPreSeason { max-width:920px; margin:0 auto; padding:14px !important; }
+.mt-preseason-hero {
+  position:relative; overflow:hidden; color:#fff; min-height:150px; box-sizing:border-box;
+  display:flex; flex-direction:column; justify-content:center; padding:24px;
+  border-radius:21px; margin-bottom:15px;
+  background:linear-gradient(90deg,rgba(12,35,57,.97),rgba(30,58,95,.86) 58%,rgba(63,125,112,.50)),url("assets/stadium-scene.svg") center 58%/cover;
+  box-shadow:0 8px 20px rgba(17,42,65,.16);
+}
+.mt-preseason-hero .mt-brand { margin-bottom:8px; }
+.mt-preseason-hero-title { font-size:30px; font-weight:850; letter-spacing:-.8px; }
+.mt-preseason-hero-subtitle { font-size:13px; margin-top:6px; opacity:.9; }
+.mt-create-match-card { border:1px solid #e2e8ed; border-radius:18px; background:#fff; padding:15px; margin-bottom:14px; box-shadow:0 4px 13px rgba(28,52,75,.07); }
+.mt-create-match-card button { border-radius:13px !important; min-height:52px !important; box-shadow:0 4px 10px rgba(63,125,112,.20); }
+.mt-match-nav { display:grid; grid-template-columns:1fr 1fr; gap:11px; margin:0 0 14px; }
+.mt-match-nav button {
+  min-height:86px !important; margin:0 !important; padding:14px !important; border:1px solid #dce4ea !important;
+  border-radius:17px !important; text-align:left !important; box-shadow:0 4px 12px rgba(28,52,75,.08);
+  background:linear-gradient(145deg,#fff,#f5f8fa) !important; color:#1E3A5F !important;
+}
+.mt-match-nav button:first-child { background:linear-gradient(145deg,#1E3A5F,#284d75) !important; color:#fff !important; border-color:#1E3A5F !important; }
+.mt-match-nav button span:first-child { font-size:16px !important; font-weight:850 !important; }
+.mt-match-nav button span:last-child { font-size:11px !important; opacity:.8; }
+#mtPreSeasonMatchPanel > div { border-radius:17px !important; border:1px solid #e1e7ec; box-shadow:0 4px 13px rgba(28,52,75,.07); padding:17px !important; }
+#mtPreSeasonMatchPanel button { border-radius:11px !important; }
+#matchtrackerPreSeason > button:last-child { border-radius:13px !important; min-height:48px !important; }
+@media (max-width:480px) {
+  .mt-home { padding-bottom:12px; }
+  .mt-home-hero { min-height:176px; padding:22px 19px; }
+  .mt-feature-card { min-height:105px; padding:13px 11px; gap:9px; }
+  .mt-feature-icon { flex-basis:36px; height:36px; font-size:25px; }
+  .mt-feature-copy strong { font-size:15px; }
+  .mt-feature-copy small { font-size:11px; }
+  .mt-home-secondary-grid .mt-feature-card { min-height:84px; }
+}
+
+
+/* =========================================================
+   MATCHTRACKER 2027.004 — PHOTO + MOTION LAYER
+   Scoped to Home / Pre Season. Reduced-motion users are respected.
+   ========================================================= */
+.mt-home-hero {
+  background:
+    linear-gradient(90deg,rgba(7,27,46,.88),rgba(12,37,59,.58) 52%,rgba(10,32,50,.18)),
+    url("assets/hero-stadium.jpg") center 48%/cover;
+  isolation:isolate;
+}
+.mt-home-hero::after {
+  content:""; position:absolute; inset:-40% auto -40% -45%; width:38%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
+  transform:skewX(-22deg); animation:mtHeroLightSweep 8s ease-in-out infinite;
+  pointer-events:none; z-index:-1;
+}
+.mt-feature-card-image {
+  position:relative; overflow:hidden; isolation:isolate; color:#fff;
+  background:
+    linear-gradient(90deg,rgba(7,31,49,.94) 0%,rgba(10,43,58,.80) 54%,rgba(10,43,58,.24) 100%),
+    var(--mt-card-image) center/cover !important;
+  border-color:rgba(255,255,255,.5);
+  box-shadow:0 7px 18px rgba(22,48,69,.15);
+  transition:transform .22s ease,box-shadow .22s ease,filter .22s ease;
+}
+.mt-feature-card-image::before {
+  content:""; position:absolute; left:0; top:0; bottom:0; width:5px;
+  background:#3F7D70; z-index:-1; transition:width .22s ease;
+}
+.mt-feature-card-image .mt-feature-icon {
+  color:#fff; background:rgba(63,125,112,.52);
+  border:1px solid rgba(255,255,255,.3); backdrop-filter:blur(5px);
+}
+.mt-feature-card-image .mt-feature-copy small { color:rgba(255,255,255,.88); }
+.mt-feature-card-image .mt-card-chevron { color:#fff; }
+@media (hover:hover) {
+  .mt-feature-card-image:hover {
+    transform:translateY(-3px); box-shadow:0 12px 25px rgba(22,48,69,.24);
+    filter:saturate(1.08);
+  }
+  .mt-feature-card-image:hover::before { width:9px; }
+}
+.mt-feature-card-image:active { transform:scale(.975); }
+.mt-home-primary-grid .mt-feature-card-image { min-height:126px; }
+.mt-home-secondary-grid .mt-feature-card-image { min-height:104px; }
+.mt-home-hero { animation:mtHeroReveal .65s ease-out both; }
+.mt-feature-card { animation:mtCardReveal .48s ease-out both; }
+.mt-feature-card:nth-child(2) { animation-delay:.06s; }
+.mt-home-secondary-grid .mt-feature-card:nth-child(1) { animation-delay:.12s; }
+.mt-home-secondary-grid .mt-feature-card:nth-child(2) { animation-delay:.18s; }
+.mt-settings-button { transition:transform .18s ease,box-shadow .18s ease; }
+.mt-settings-button:active { transform:scale(.985); }
+.mt-match-nav button { transition:transform .18s ease,box-shadow .18s ease; }
+.mt-match-nav button:active { transform:scale(.975); }
+.mt-preseason-hero {
+  background:
+    linear-gradient(90deg,rgba(8,30,49,.92),rgba(16,48,69,.75) 62%,rgba(20,70,65,.45)),
+    url("assets/hero-stadium.jpg") center 48%/cover;
+}
+@keyframes mtHeroLightSweep {
+  0%,55% { left:-45%; opacity:0; }
+  65% { opacity:1; }
+  100% { left:125%; opacity:0; }
+}
+@keyframes mtHeroReveal {
+  from { opacity:0; transform:translateY(9px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@keyframes mtCardReveal {
+  from { opacity:0; transform:translateY(10px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@media (max-width:480px) {
+  .mt-home-primary-grid .mt-feature-card-image { min-height:112px; }
+  .mt-home-secondary-grid .mt-feature-card-image { min-height:92px; }
+  .mt-feature-card-image { background-position:center !important; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .mt-home-hero,.mt-feature-card,.mt-home-hero::after { animation:none !important; }
+  .mt-feature-card,.mt-settings-button,.mt-match-nav button { transition:none !important; }
+}
+
+
+/* =========================================================
+   MATCHTRACKER 2027.005 — REFINED IMAGE COMPOSITION
+   Images are intentionally contained to the right side of
+   cards; text remains on a clean navy field.
+   ========================================================= */
+.mt-home-hero {
+  background:
+    linear-gradient(90deg,rgba(8,31,51,.98) 0%,rgba(10,39,62,.94) 43%,rgba(10,39,62,.48) 72%,rgba(10,39,62,.08) 100%),
+    url("assets/hero-stadium.jpg") right center/auto 100% no-repeat,
+    #102f4b;
+}
+.mt-feature-card-image {
+  background:
+    linear-gradient(90deg,#0b2d49 0%,#0b2d49 39%,rgba(11,45,73,.92) 49%,rgba(11,45,73,.16) 100%),
+    var(--mt-card-image) right center/56% 100% no-repeat,
+    #0b2d49 !important;
+  border:1px solid rgba(255,255,255,.5);
+}
+.mt-feature-card-image::before {
+  width:6px;
+  background:linear-gradient(180deg,#3F7D70,#70aa54);
+}
+.mt-feature-card-image .mt-feature-icon {
+  background:rgba(63,125,112,.22);
+  border:1px solid rgba(255,255,255,.25);
+}
+@media (max-width:600px) {
+  .mt-feature-card-image {
+    background:
+      linear-gradient(90deg,#0b2d49 0%,#0b2d49 43%,rgba(11,45,73,.86) 58%,rgba(11,45,73,.18) 100%),
+      var(--mt-card-image) right center/49% 100% no-repeat,
+      #0b2d49 !important;
+  }
+  .mt-home-hero {
+    background:
+      linear-gradient(90deg,rgba(8,31,51,.98) 0%,rgba(10,39,62,.88) 56%,rgba(10,39,62,.22) 100%),
+      url("assets/hero-stadium.jpg") right center/auto 100% no-repeat,
+      #102f4b;
+  }
+}
+
+
+/* MATCHTRACKER 2027.006 — CLEAN PHOTO ASSETS */
+.mt-home-hero {
+  background:
+    linear-gradient(90deg,rgba(8,31,51,.98) 0%,rgba(10,39,62,.90) 43%,rgba(10,39,62,.42) 70%,rgba(10,39,62,.08) 100%),
+    url("assets/hero-stadium.jpg") right center/auto 100% no-repeat,
+    #102f4b;
+}
+.mt-feature-card-image {
+  background:
+    linear-gradient(90deg,#0b2d49 0%,#0b2d49 38%,rgba(11,45,73,.88) 51%,rgba(11,45,73,.10) 100%),
+    var(--mt-card-image) right center/54% 100% no-repeat,
+    #0b2d49 !important;
+}
+.mt-feature-card-image .mt-feature-copy,
+.mt-feature-card-image .mt-feature-icon,
+.mt-feature-card-image .mt-card-chevron {
+  position:relative;
+  z-index:1;
+}
+
+
+/* =========================================================
+   MATCHTRACKER 2027.007 — FINISH / CONSISTENCY PASS
+   Single photo layer, single arrow treatment, solid card base.
+   ========================================================= */
+.mt-home-hero {
+  background:#102f4b !important;
+  border:0 !important;
+  box-shadow:0 10px 24px rgba(17,42,65,.18);
+  isolation:isolate;
+}
+.mt-home-hero::before {
+  content:"";
+  position:absolute;
+  inset:0 0 0 auto;
+  width:48%;
+  background:
+    linear-gradient(90deg,#102f4b 0%,rgba(16,47,75,.52) 22%,rgba(16,47,75,.04) 100%),
+    url("assets/hero-stadium.jpg") center center/cover no-repeat;
+  z-index:-1;
+  pointer-events:none;
+}
+.mt-home-hero::after {
+  z-index:0;
+  pointer-events:none;
+}
+.mt-home-hero > * {
+  position:relative;
+  z-index:1;
+}
+.mt-feature-card-image {
+  appearance:none !important;
+  -webkit-appearance:none !important;
+  box-sizing:border-box !important;
+  position:relative !important;
+  isolation:isolate !important;
+  overflow:hidden !important;
+  background:#0b2d49 !important;
+  border:1px solid rgba(255,255,255,.22) !important;
+  border-radius:18px !important;
+  box-shadow:0 6px 16px rgba(20,45,66,.14) !important;
+  color:#fff !important;
+}
+.mt-feature-card-image::before {
+  content:"";
+  position:absolute;
+  inset:0 0 0 auto;
+  width:49%;
+  background:
+    linear-gradient(90deg,#0b2d49 0%,rgba(11,45,73,.48) 28%,rgba(11,45,73,.04) 100%),
+    var(--mt-card-image) center center/cover no-repeat;
+  z-index:-1;
+  pointer-events:none;
+}
+.mt-feature-card-image::after {
+  content:none !important;
+  display:none !important;
+}
+.mt-feature-photo { display:none !important; }
+.mt-feature-card-image .mt-feature-icon,
+.mt-feature-card-image .mt-feature-copy,
+.mt-feature-card-image .mt-card-chevron {
+  position:relative !important;
+  z-index:1 !important;
+}
+.mt-feature-card-image .mt-card-chevron {
+  flex:0 0 16px;
+  width:16px;
+  height:22px;
+  margin-left:auto;
+  color:transparent !important;
+  font-size:0 !important;
+  background:transparent !important;
+}
+.mt-feature-card-image .mt-card-chevron::before {
+  content:"";
+  display:block;
+  width:10px;
+  height:10px;
+  border-top:2.5px solid #fff;
+  border-right:2.5px solid #fff;
+  transform:rotate(45deg);
+  margin:5px 0 0 0;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.25));
+}
+.mt-feature-card-image .mt-feature-icon {
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  border-radius:13px;
+  background:rgba(63,125,112,.26) !important;
+  border:1px solid rgba(255,255,255,.24) !important;
+  box-shadow:none !important;
+}
+.mt-feature-card-image .mt-feature-copy strong { color:#fff !important; }
+.mt-feature-card-image .mt-feature-copy small { color:rgba(255,255,255,.88) !important; }
+.mt-home-primary-grid .mt-feature-card-image { min-height:118px !important; }
+.mt-home-secondary-grid .mt-feature-card-image { min-height:100px !important; }
+.mt-feature-card-image:hover { transform:translateY(-2px); }
+.mt-feature-card-image:focus-visible,
+.mt-settings-button:focus-visible {
+  outline:3px solid #3F7D70 !important;
+  outline-offset:3px;
+}
+@media (max-width:600px) {
+  .mt-home-hero::before { width:48%; }
+  .mt-feature-card-image::before { width:46%; }
+}
+
+
+/* MATCHTRACKER 2027.008 — HERO IMAGE BALANCE */
+.mt-home-hero {
+  background:#102f4b !important;
+  overflow:hidden !important;
+  isolation:isolate;
+}
+.mt-home-hero::before {
+  width:58% !important;
+  background:
+    linear-gradient(90deg,#102f4b 0%,rgba(16,47,75,.78) 15%,rgba(16,47,75,.28) 48%,rgba(16,47,75,.04) 100%),
+    url("assets/hero-stadium.jpg") center center/cover no-repeat !important;
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+}
+.mt-home-hero::after {
+  content:none !important;
+  display:none !important;
+}
+
+
+/* MATCHTRACKER 2027.009 — HEADER SEAM + ICON REFINEMENT */
+.mt-home-hero {
+  background-color:#102f4b !important;
+  background-image:
+    linear-gradient(90deg,
+      #102f4b 0%,
+      #102f4b 27%,
+      rgba(16,47,75,.96) 38%,
+      rgba(16,47,75,.72) 52%,
+      rgba(16,47,75,.18) 76%,
+      rgba(16,47,75,.04) 100%),
+    url("assets/hero-stadium.jpg") !important;
+  background-repeat:no-repeat,no-repeat !important;
+  background-position:center, right center !important;
+  background-size:100% 100%, 65% 100% !important;
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:0 10px 24px rgba(17,42,65,.18) !important;
+}
+.mt-home-hero::before,
+.mt-home-hero::after {
+  content:none !important;
+  display:none !important;
+}
+.mt-feature-icon svg {
+  display:block;
+  width:27px;
+  height:27px;
+}
+.mt-feature-icon {
+  color:#fff !important;
+}
+
+
+/* MATCHTRACKER 2027.010 — IPHONE HOME SCREEN PROPORTIONS */
+@media (max-width:600px) {
+  #matchtrackerHome {
+    padding:14px !important;
+  }
+  .mt-home-hero {
+    min-height:212px !important;
+    padding:25px 20px !important;
+    border-radius:22px !important;
+  }
+  .mt-home-hero::before {
+    width:58% !important;
+  }
+  .mt-brand {
+    font-size:10px !important;
+    letter-spacing:2.5px !important;
+  }
+  .mt-home-title {
+    font-size:clamp(29px,8vw,36px) !important;
+    line-height:1.08 !important;
+  }
+  .mt-home-subtitle {
+    font-size:13px !important;
+    line-height:1.4 !important;
+    max-width:250px;
+  }
+  .mt-home-primary-grid,
+  .mt-home-secondary-grid {
+    gap:11px !important;
+  }
+  .mt-home-primary-grid .mt-feature-card-image {
+    min-height:132px !important;
+  }
+  .mt-home-secondary-grid .mt-feature-card-image {
+    min-height:116px !important;
+  }
+  .mt-feature-card-image {
+    padding:14px 11px !important;
+    gap:8px !important;
+    border-radius:16px !important;
+  }
+  .mt-feature-card-image::before {
+    width:47% !important;
+  }
+  .mt-feature-card-image .mt-feature-icon {
+    flex-basis:36px !important;
+    width:36px !important;
+    height:36px !important;
+    border-radius:11px !important;
+  }
+  .mt-feature-card-image .mt-feature-icon svg {
+    width:24px !important;
+    height:24px !important;
+  }
+  .mt-feature-card-image .mt-feature-copy strong {
+    font-size:14px !important;
+    line-height:1.2 !important;
+  }
+  .mt-feature-card-image .mt-feature-copy small {
+    font-size:10.5px !important;
+    line-height:1.3 !important;
+  }
+  .mt-feature-card-image .mt-card-chevron {
+    flex-basis:12px !important;
+    width:12px !important;
+  }
+  .mt-feature-card-image .mt-card-chevron::before {
+    width:8px !important;
+    height:8px !important;
+    border-width:2px !important;
+  }
+  .mt-section-label {
+    margin:20px 4px 11px !important;
+    font-size:10px !important;
+    letter-spacing:2px !important;
+  }
+  .mt-settings-button {
+    min-height:54px !important;
+    margin-top:15px !important;
+    border-radius:14px !important;
+    font-size:14px !important;
+  }
+  .mt-build-info {
+    padding-top:15px !important;
+  }
+}
+@media (min-width:601px) and (max-width:900px) {
+  .mt-home-hero { min-height:205px; }
+  .mt-home-primary-grid .mt-feature-card-image { min-height:124px; }
+  .mt-home-secondary-grid .mt-feature-card-image { min-height:108px; }
+}
+
+
+/* MATCHTRACKER 2027.011 — PHONE-FIRST SINGLE-COLUMN HOME */
+@media (max-width:600px) {
+  #matchtrackerHome {
+    padding:16px !important;
+  }
+  .mt-home-hero {
+    min-height:230px !important;
+    padding:28px 22px !important;
+    margin-bottom:18px !important;
+    border-radius:23px !important;
+    background-position:center, right center !important;
+    background-size:100% 100%, 70% 100% !important;
+  }
+  .mt-home-title {
+    font-size:36px !important;
+    line-height:1.08 !important;
+  }
+  .mt-home-subtitle {
+    font-size:14px !important;
+    max-width:270px !important;
+  }
+  .mt-home-primary-grid,
+  .mt-home-secondary-grid {
+    grid-template-columns:minmax(0,1fr) !important;
+    gap:13px !important;
+  }
+  .mt-home-primary-grid .mt-feature-card-image,
+  .mt-home-secondary-grid .mt-feature-card-image {
+    min-height:142px !important;
+    padding:18px 16px !important;
+    gap:13px !important;
+    border-radius:18px !important;
+  }
+  .mt-feature-card-image::before {
+    width:48% !important;
+    background-position:center center !important;
+    background-size:cover !important;
+  }
+  .mt-feature-card-image .mt-feature-icon {
+    flex-basis:48px !important;
+    width:48px !important;
+    height:48px !important;
+    border-radius:14px !important;
+  }
+  .mt-feature-card-image .mt-feature-icon svg {
+    width:29px !important;
+    height:29px !important;
+  }
+  .mt-feature-card-image .mt-feature-copy {
+    gap:6px !important;
+  }
+  .mt-feature-card-image .mt-feature-copy strong {
+    font-size:18px !important;
+    line-height:1.2 !important;
+  }
+  .mt-feature-card-image .mt-feature-copy small {
+    font-size:13px !important;
+    line-height:1.35 !important;
+    max-width:230px !important;
+  }
+  .mt-feature-card-image .mt-card-chevron {
+    flex-basis:18px !important;
+    width:18px !important;
+    height:26px !important;
+  }
+  .mt-feature-card-image .mt-card-chevron::before {
+    width:11px !important;
+    height:11px !important;
+    border-width:2.5px !important;
+    margin-top:6px !important;
+  }
+  .mt-section-label {
+    margin:22px 4px 12px !important;
+    font-size:11px !important;
+  }
+  .mt-settings-button {
+    min-height:60px !important;
+    margin-top:17px !important;
+    padding:0 18px !important;
+    font-size:15px !important;
+  }
+  .mt-build-info {
+    padding:18px 8px 8px !important;
+    font-size:11px !important;
+  }
+  .mt-build-info strong { font-size:12px !important; }
+}
+
+
+/* MATCHTRACKER 2027.013 — COMPACT SINGLE-COLUMN PHONE HOME */
+@media (max-width:600px) {
+  #matchtrackerHome { padding:12px !important; }
+  .mt-home-hero {
+    min-height:178px !important;
+    padding:21px 18px !important;
+    margin-bottom:14px !important;
+    border-radius:20px !important;
+  }
+  .mt-home-title { font-size:31px !important; }
+  .mt-home-subtitle { font-size:12px !important; }
+  .mt-home-primary-grid,
+  .mt-home-secondary-grid { gap:9px !important; }
+  .mt-home-primary-grid .mt-feature-card-image,
+  .mt-home-secondary-grid .mt-feature-card-image {
+    min-height:104px !important;
+    padding:12px 13px !important;
+    gap:10px !important;
+    border-radius:15px !important;
+  }
+  .mt-feature-card-image::before { width:44% !important; }
+  .mt-feature-card-image .mt-feature-icon {
+    flex-basis:40px !important;
+    width:40px !important;
+    height:40px !important;
+    border-radius:12px !important;
+  }
+  .mt-feature-card-image .mt-feature-icon svg {
+    width:25px !important;
+    height:25px !important;
+  }
+  .mt-feature-card-image .mt-feature-copy { gap:4px !important; }
+  .mt-feature-card-image .mt-feature-copy strong {
+    font-size:16px !important;
+    line-height:1.2 !important;
+  }
+  .mt-feature-card-image .mt-feature-copy small {
+    font-size:11px !important;
+    line-height:1.25 !important;
+  }
+  .mt-feature-card-image .mt-card-chevron {
+    flex-basis:14px !important;
+    width:14px !important;
+  }
+  .mt-feature-card-image .mt-card-chevron::before {
+    width:9px !important;
+    height:9px !important;
+    margin-top:5px !important;
+  }
+  .mt-section-label {
+    margin:15px 4px 9px !important;
+    font-size:10px !important;
+  }
+  .mt-settings-button {
+    min-height:50px !important;
+    margin-top:12px !important;
+    padding:0 14px !important;
+    font-size:14px !important;
+  }
+  .mt-build-info { padding:12px 8px 5px !important; }
+}
+
+
+/* MATCHTRACKER 2027.014 — STREAMLINED HOME WITHOUT HERO BANNER */
+.mt-home-primary-grid {
+  margin-top:8px !important;
+}
+@media (max-width:600px) {
+  #matchtrackerHome {
+    padding-top:18px !important;
+  }
+  .mt-home-primary-grid {
+    margin-top:0 !important;
+  }
+  .mt-home-secondary-grid {
+    margin-top:0 !important;
+  }
+}
+
+/* MATCHTRACKER 2027.015 — SQUAD SCREEN REFINEMENT */
+#matchtrackerSquad.mt-squad-screen {
+  min-height:100vh;
+  box-sizing:border-box;
+  padding:20px;
+  background:#F1F4F6;
+  color:#243447;
+}
+#matchtrackerSquad .mt-squad-heading { margin:2px 2px 20px; }
+#matchtrackerSquad .mt-squad-eyebrow {
+  color:#3F7D70;
+  font-size:11px;
+  line-height:1.2;
+  font-weight:800;
+  letter-spacing:1.8px;
+  margin-bottom:8px;
+}
+#matchtrackerSquad .mt-squad-title-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+#matchtrackerSquad .mt-squad-title-row h1 {
+  margin:0;
+  color:#1E3A5F;
+  font-size:27px;
+  line-height:1.15;
+  font-weight:850;
+  letter-spacing:-.5px;
+}
+#matchtrackerSquad .mt-squad-title-row p {
+  margin:6px 0 0;
+  color:#5C6B78;
+  font-size:13px;
+  line-height:1.4;
+}
+#matchtrackerSquad .mt-squad-count {
+  flex:none;
+  min-width:62px;
+  padding:9px 10px;
+  border:1px solid #D8E0E6;
+  border-radius:13px;
+  background:#fff;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+#matchtrackerSquad .mt-squad-count strong { color:#1E3A5F; font-size:23px; line-height:1; font-weight:850; }
+#matchtrackerSquad .mt-squad-count span { margin-top:5px; color:#687784; font-size:9px; font-weight:800; letter-spacing:1px; }
+#matchtrackerSquad .mt-squad-add {
+  width:100%; min-height:52px; border:0; border-radius:12px;
+  background:#3F7D70; color:#fff; display:flex; align-items:center; justify-content:center; gap:9px;
+  font-size:16px; font-weight:800; cursor:pointer; box-shadow:0 3px 8px rgba(30,58,95,.12);
+}
+#matchtrackerSquad .mt-squad-add:active { transform:scale(.99); }
+#matchtrackerSquad .mt-squad-add-plus { font-size:23px; line-height:1; font-weight:500; }
+#matchtrackerSquad .mt-squad-list-section { margin-top:24px; }
+#matchtrackerSquad .mt-squad-list-header { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin:0 2px 10px; }
+#matchtrackerSquad .mt-squad-list-header h2 { margin:0; color:#1E3A5F; font-size:17px; line-height:1.2; font-weight:850; }
+#matchtrackerSquad .mt-squad-list-header span { color:#687784; font-size:12px; font-weight:650; }
+#matchtrackerSquad .mt-squad-player-list { display:flex; flex-direction:column; gap:9px; }
+#matchtrackerSquad .mt-squad-empty {
+  display:flex; align-items:center; gap:14px; padding:18px 16px;
+  border:1px solid #DCE3E8; border-radius:14px; background:#fff;
+}
+#matchtrackerSquad .mt-squad-empty-mark {
+  flex:none; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+  background:#EAF1EF; color:#3F7D70; font-size:25px; font-weight:500;
+}
+#matchtrackerSquad .mt-squad-empty strong { display:block; color:#243447; font-size:15px; font-weight:800; }
+#matchtrackerSquad .mt-squad-empty p { margin:4px 0 0; color:#687784; font-size:12px; line-height:1.45; }
+#matchtrackerSquad .mt-squad-player-row {
+  display:flex; align-items:center; gap:12px; min-height:64px; box-sizing:border-box;
+  padding:9px 11px; border:1px solid #E0E6EA; border-radius:13px; background:#fff;
+  box-shadow:0 2px 5px rgba(25,45,65,.035);
+}
+#matchtrackerSquad .mt-squad-player-number {
+  flex:none; width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+  background:#EAF0F5; color:#1E3A5F; font-size:17px; font-weight:850;
+}
+#matchtrackerSquad .mt-squad-player-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+#matchtrackerSquad .mt-squad-player-info strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#243447; font-size:15px; font-weight:800; }
+#matchtrackerSquad .mt-squad-player-info span { color:#82909B; font-size:9px; font-weight:800; letter-spacing:1px; }
+#matchtrackerSquad .mt-squad-edit {
+  flex:none; min-height:38px; padding:0 10px; border:1px solid #D8E0E6; border-radius:9px;
+  background:#fff; color:#1E3A5F; font-size:12px; font-weight:800; cursor:pointer;
+}
+#matchtrackerSquad .mt-squad-edit span { margin-left:4px; font-size:18px; line-height:0; vertical-align:-1px; }
+#matchtrackerSquad .mt-squad-back {
+  width:100%; min-height:48px; margin-top:22px; border:1px solid #C8D2DA; border-radius:11px;
+  background:#fff; color:#243447; display:flex; align-items:center; justify-content:center; gap:9px;
+  font-size:14px; font-weight:800; cursor:pointer;
+}
+#matchtrackerSquad .mt-squad-back span { font-size:19px; }
+@media (max-width:600px) {
+  #matchtrackerSquad.mt-squad-screen { padding:18px 16px 24px; }
+  #matchtrackerSquad .mt-squad-heading { margin-bottom:17px; }
+  #matchtrackerSquad .mt-squad-title-row h1 { font-size:25px; }
+  #matchtrackerSquad .mt-squad-list-section { margin-top:21px; }
+}
+
+/* MATCHTRACKER 2027.017 — SQUAD FORM FIX */
+#matchtrackerSquad.mt-squad-screen { min-height:100vh; box-sizing:border-box; padding:22px 20px 28px; background:#F1F4F6; color:#243447; }
+#matchtrackerSquad .mt-sm-header { display:flex; align-items:center; justify-content:space-between; gap:14px; margin:2px 2px 22px; }
+#matchtrackerSquad .mt-sm-eyebrow { color:#3F7D70; font-size:10px; line-height:1.2; font-weight:850; letter-spacing:1.7px; margin-bottom:7px; }
+#matchtrackerSquad .mt-sm-header h1 { margin:0; color:#1E3A5F; font-size:31px; line-height:1.08; letter-spacing:-.7px; font-weight:850; }
+#matchtrackerSquad .mt-sm-header p { margin:6px 0 0; color:#5C6B78; font-size:13px; line-height:1.4; }
+#matchtrackerSquad .mt-sm-header-icon { flex:none; width:48px; height:48px; display:grid; place-items:center; border-radius:14px; background:#1E3A5F; color:#fff; font-size:27px; }
+#matchtrackerSquad .mt-sm-stats { display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-bottom:18px; }
+#matchtrackerSquad .mt-sm-stat { min-width:0; box-sizing:border-box; padding:14px 15px 13px; border:1px solid #DCE3E8; border-radius:14px; background:#fff; box-shadow:0 2px 6px rgba(25,45,65,.035); }
+#matchtrackerSquad .mt-sm-stat-label { display:flex; align-items:center; gap:6px; color:#687784; font-size:9px; letter-spacing:.65px; font-weight:850; white-space:nowrap; }
+#matchtrackerSquad .mt-sm-stat-label span { color:#3F7D70; font-size:12px; }
+#matchtrackerSquad .mt-sm-stat strong { display:block; margin-top:8px; color:#1E3A5F; font-size:29px; line-height:1; font-weight:850; }
+#matchtrackerSquad .mt-sm-stat small { display:block; margin-top:5px; color:#687784; font-size:11px; }
+#matchtrackerSquad .mt-sm-action { width:100%; display:flex; align-items:center; gap:13px; box-sizing:border-box; min-height:94px; margin:0 0 12px; padding:15px; border:1px solid #DCE3E8; border-radius:15px; background:#fff; color:#243447; text-align:left; cursor:pointer; box-shadow:0 3px 8px rgba(25,45,65,.045); }
+#matchtrackerSquad .mt-sm-action:active { transform:scale(.992); }
+#matchtrackerSquad .mt-sm-action-icon { flex:none; width:48px; height:48px; display:grid; place-items:center; border-radius:13px; background:var(--action-color); color:#fff; font-size:26px; font-weight:700; }
+#matchtrackerSquad .mt-sm-action-copy { min-width:0; flex:1; display:flex; flex-direction:column; gap:3px; }
+#matchtrackerSquad .mt-sm-action-copy strong { color:#1E3A5F; font-size:17px; line-height:1.2; font-weight:850; }
+#matchtrackerSquad .mt-sm-action-copy small { color:#687784; font-size:11px; line-height:1.35; }
+#matchtrackerSquad .mt-sm-action-copy em { margin-top:3px; color:var(--action-color); font-size:10px; font-style:normal; font-weight:800; }
+#matchtrackerSquad .mt-sm-chevron { flex:none; color:#82909B; font-size:28px; line-height:1; }
+#matchtrackerSquad .mt-sm-back { width:100%; min-height:48px; margin-top:12px; border:1px solid #C8D2DA; border-radius:11px; background:#fff; color:#243447; display:flex; align-items:center; justify-content:center; gap:9px; font-size:14px; font-weight:800; cursor:pointer; }
+#matchtrackerSquad .mt-sm-back span { font-size:19px; }
+#matchtrackerSquad .mt-sm-subheader { margin:0 1px 18px; }
+#matchtrackerSquad .mt-sm-backlink { border:0; padding:0; margin:0 0 20px; background:transparent; color:#3F7D70; font-size:14px; font-weight:800; }
+#matchtrackerSquad .mt-sm-subtitle-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+#matchtrackerSquad .mt-sm-subtitle-row h1 { margin:0; color:#1E3A5F; font-size:27px; line-height:1.12; font-weight:850; }
+#matchtrackerSquad .mt-sm-subtitle-row p { margin:6px 0 0; color:#5C6B78; font-size:12px; line-height:1.4; }
+#matchtrackerSquad .mt-sm-count { flex:none; min-width:55px; padding:8px 9px; border:1px solid #D8E0E6; border-radius:11px; background:#fff; display:flex; flex-direction:column; align-items:center; }
+#matchtrackerSquad .mt-sm-count strong { color:#1E3A5F; font-size:22px; line-height:1; font-weight:850; }
+#matchtrackerSquad .mt-sm-count span { margin-top:4px; color:#687784; font-size:8px; font-weight:850; letter-spacing:.7px; text-transform:uppercase; }
+#matchtrackerSquad .mt-sm-note { margin:-3px 0 14px; padding:11px 12px; border-left:3px solid #3F7D70; border-radius:0 9px 9px 0; background:#E8F0ED; color:#526477; font-size:11px; line-height:1.45; }
+#matchtrackerSquad .mt-sm-primary { width:100%; min-height:49px; margin:0 0 16px; padding:0 14px; border:0; border-radius:11px; background:#3F7D70; color:#fff; font-size:15px; font-weight:850; cursor:pointer; }
+#matchtrackerSquad .mt-sm-primary-borrowed { background:#1E3A5F; }
+#matchtrackerSquad .mt-sm-list { display:flex; flex-direction:column; gap:8px; }
+#matchtrackerSquad .mt-sm-player-row { display:flex; align-items:center; gap:11px; min-height:59px; box-sizing:border-box; padding:8px 10px; border:1px solid #E0E6EA; border-radius:12px; background:#fff; }
+#matchtrackerSquad .mt-sm-number { flex:none; width:38px; height:38px; display:grid; place-items:center; border-radius:11px; background:#EAF0F5; color:#1E3A5F; font-size:16px; font-weight:850; }
+#matchtrackerSquad .mt-sm-player-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+#matchtrackerSquad .mt-sm-player-info strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#243447; font-size:14px; font-weight:850; }
+#matchtrackerSquad .mt-sm-player-info small { color:#82909B; font-size:8px; font-weight:850; letter-spacing:.8px; }
+#matchtrackerSquad .mt-sm-edit { flex:none; min-height:34px; padding:0 9px; border:1px solid #D8E0E6; border-radius:8px; background:#fff; color:#1E3A5F; font-size:11px; font-weight:850; }
+#matchtrackerSquad .mt-sm-empty { display:flex; align-items:center; gap:12px; padding:15px 13px; border:1px solid #DCE3E8; border-radius:13px; background:#fff; }
+#matchtrackerSquad .mt-sm-empty>span { flex:none; width:38px; height:38px; display:grid; place-items:center; border-radius:11px; background:#EAF1EF; color:#3F7D70; font-size:24px; }
+#matchtrackerSquad .mt-sm-empty strong { display:block; color:#243447; font-size:13px; font-weight:850; }
+#matchtrackerSquad .mt-sm-empty p { margin:3px 0 0; color:#687784; font-size:11px; line-height:1.4; }
+#matchtrackerSquad .mt-sm-overlay { position:fixed; inset:0; z-index:9999; display:flex; align-items:flex-start; justify-content:center; overflow:auto; padding:20px; box-sizing:border-box; background:rgba(16,29,43,.48); }
+#matchtrackerSquad .mt-sm-form-card { width:100%; max-width:480px; margin:auto 0; padding:21px; box-sizing:border-box; border-radius:18px; background:#fff; box-shadow:0 12px 40px rgba(0,0,0,.18); }
+#matchtrackerSquad .mt-sm-form-card h2 { margin:0 0 18px; color:#1E3A5F; font-size:23px; font-weight:850; }
+#matchtrackerSquad .mt-sm-field { display:block; margin-bottom:15px; color:#243447; font-size:14px; font-weight:800; }
+#matchtrackerSquad .mt-sm-field input { display:block; width:100%; min-height:52px; box-sizing:border-box; margin-top:7px; padding:12px 13px; border:1px solid #B8C2CC; border-radius:11px; background:#fff; color:#243447; font-size:17px; }
+#matchtrackerSquad .mt-sm-form-actions { display:flex; gap:10px; margin-top:18px; }
+#matchtrackerSquad .mt-sm-form-actions .mt-sm-primary { flex:1; margin:0; }
+#matchtrackerSquad .mt-sm-secondary { min-width:105px; min-height:49px; padding:0 16px; border:1px solid #B8C2CC; border-radius:11px; background:#fff; color:#243447; font-size:14px; font-weight:800; }
+#matchtrackerSquad .mt-sm-remove { width:100%; min-height:44px; margin-top:11px; border:1px solid #E3B4B0; border-radius:10px; background:#fff; color:#B42318; font-size:13px; font-weight:800; }
+@media (max-width:600px) { #matchtrackerSquad.mt-squad-screen { padding:20px 16px 26px; } #matchtrackerSquad .mt-sm-header h1 { font-size:29px; } #matchtrackerSquad .mt-sm-action { min-height:88px; } }
+
+
+/* MatchTracker 2027.022 — compact, readable squad player rows */
+#matchtrackerSquad .mt-sm-subheader { margin:0 1px 14px; padding:14px 14px 15px; border:1px solid #DCE5E9; border-radius:16px; background:linear-gradient(135deg,#FFFFFF 0%,#EAF1F3 100%); box-shadow:0 5px 16px rgba(30,58,95,.06); }
+#matchtrackerSquad .mt-sm-backlink { margin:0 0 13px; font-size:13px; }
+#matchtrackerSquad .mt-sm-eyebrow { margin-bottom:7px; color:#3F7D70; font-size:9px; font-weight:900; letter-spacing:1.8px; }
+#matchtrackerSquad .mt-sm-subtitle-row { align-items:center; gap:9px; }
+#matchtrackerSquad .mt-sm-subtitle-row h1 { font-size:22px; line-height:1.08; letter-spacing:-.35px; }
+#matchtrackerSquad .mt-sm-subtitle-row p { margin-top:4px; font-size:11px; }
+#matchtrackerSquad .mt-sm-count { min-width:49px; padding:7px 8px; border-radius:10px; }
+#matchtrackerSquad .mt-sm-count strong { font-size:20px; }
+#matchtrackerSquad .mt-sm-player-row { display:grid; grid-template-columns:42px minmax(0,1fr); grid-template-areas:"number info" "number actions"; align-items:center; column-gap:9px; row-gap:4px; min-height:0; padding:8px 10px; border-radius:12px; }
+#matchtrackerSquad .mt-sm-number { grid-area:number; width:42px; height:42px; border-radius:12px; }
+#matchtrackerSquad .mt-sm-player-info { grid-area:info; width:100%; }
+#matchtrackerSquad .mt-sm-player-info strong { white-space:normal; overflow:visible; text-overflow:clip; font-size:16px; line-height:1.15; }
+#matchtrackerSquad .mt-sm-player-info small { margin-top:2px; font-size:9px; letter-spacing:.55px; }
+#matchtrackerSquad .mt-sm-player-actions { grid-area:actions; display:flex; align-items:center; gap:7px; min-width:0; }
+#matchtrackerSquad .mt-sm-edit { min-height:26px; padding:0 8px; border-radius:7px; font-size:9px; line-height:1; }
+#matchtrackerSquad .mt-sm-availability-action { background:#EAF1EF; border-color:#D5E4DE; color:#326E61; }
+#matchtrackerSquad .mt-sm-details-action { min-height:27px; padding:0 7px; border-color:transparent; background:transparent; color:#667785; font-size:9px; font-weight:750; }
+#matchtrackerSquad .mt-sm-list { gap:7px; }

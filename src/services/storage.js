@@ -20,7 +20,8 @@
         matchLog: "matchtracker.test.matchLog",
         seasonStats: "matchtracker.test.seasonStats",
         players: "matchtracker.test.players",
-        opponents: "matchtracker.test.opponents"
+        opponents: "matchtracker.test.opponents",
+        availability: "matchtracker.test.availability"
     });
 
     function load(key, fallback) {
@@ -179,6 +180,14 @@
 
         clearSeasonStats: function () {
             return remove(KEYS.seasonStats);
+        },
+
+        loadAvailability: function () {
+            return load(KEYS.availability, []);
+        },
+
+        saveAvailability: function (records) {
+            return save(KEYS.availability, records);
         }
     };
 
@@ -215,6 +224,44 @@
         }
     } catch (error) {
         console.warn("MatchTracker test data setup could not complete safely.", error);
+    }
+
+    // One-time demonstration roster for MatchTracker 2027 testing.
+    // Seed only empty registers; never overwrite players entered by the user.
+    try {
+        const seedKey = "matchtracker.test.demoRosterSeed.v1";
+        if (!window.localStorage.getItem(seedKey)) {
+            const regularRaw = window.localStorage.getItem(KEYS.players);
+            const borrowedRaw = window.localStorage.getItem(KEYS.borrowedPlayers);
+            const regular = regularRaw ? JSON.parse(regularRaw) : [];
+            const borrowed = borrowedRaw ? JSON.parse(borrowedRaw) : [];
+
+            if (!Array.isArray(regular) || !Array.isArray(borrowed)) {
+                throw new Error("Player register data is not in the expected format.");
+            }
+
+            if (regular.length === 0) {
+                const demoPlayers = Array.from({ length: 20 }, (_, index) => ({
+                    id: `mt27_test_player_${String(index + 1).padStart(2, "0")}`,
+                    name: `Test Player ${String(index + 1).padStart(2, "0")}`,
+                    number: String(index + 1)
+                }));
+                window.localStorage.setItem(KEYS.players, JSON.stringify(demoPlayers));
+            }
+
+            if (borrowed.length === 0) {
+                const demoBorrowed = Array.from({ length: 5 }, (_, index) => ({
+                    id: `mt27_test_borrowed_${String(index + 1).padStart(2, "0")}`,
+                    name: `Borrowed Test ${String(index + 1).padStart(2, "0")}`,
+                    number: String(index + 21)
+                }));
+                window.localStorage.setItem(KEYS.borrowedPlayers, JSON.stringify(demoBorrowed));
+            }
+
+            window.localStorage.setItem(seedKey, "done");
+        }
+    } catch (error) {
+        console.warn("MatchTracker demonstration roster could not be seeded safely.", error);
     }
 
     window.MatchTrackerStorage = Object.freeze(

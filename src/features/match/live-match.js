@@ -3,7 +3,7 @@
 (function (window) {
   "use strict";
   const C = { navy: "#1E3A5F", green: "#3F7D70", bg: "#F1F4F6", ink: "#243447", muted: "#657482", white: "#fff", red: "#B42318" };
-  let match = null, root = null, timer = null, elapsed = 0, period = "First Half", eventRows = [], playerStats = {}, teamStats = null;
+  let match = null, root = null, timer = null, elapsed = 0, halfElapsed = 0, period = "First Half", eventRows = [], playerStats = {}, teamStats = null;
   let playerEnteredAt = {}, playerSeconds = {}, starterNames = new Set(), appearedNames = new Set();
   let callbacks = { onBack: null, onCompleted: null };
   const store = () => window.MatchTrackerPreSeasonService;
@@ -15,6 +15,7 @@
     callbacks.onBack = typeof options.onBack === "function" ? options.onBack : null;
     callbacks.onCompleted = typeof options.onCompleted === "function" ? options.onCompleted : null;
     elapsed = Number(match?.elapsedSeconds || 0);
+    halfElapsed = Number(match?.halfElapsedSeconds ?? (period === "Second Half" ? Math.max(0, elapsed - 2700) : elapsed));
     period = match?.period || "First Half";
     eventRows = Array.isArray(match?.events) ? match.events.slice() : [];
     teamStats = match?.statistics?.team || null;
@@ -34,7 +35,7 @@
   }
   function shell(title, subtitle) {
     root.innerHTML = ""; root.style.cssText = `min-height:100vh;box-sizing:border-box;padding:12px;background:${C.bg};color:${C.ink};font-family:Arial,sans-serif;`;
-    const header = document.createElement("header"); header.style.cssText = `background:${C.navy};color:white;padding:17px;border-radius:16px;margin-bottom:12px;`;
+    const header = document.createElement("header"); header.style.cssText = `background:linear-gradient(115deg,rgba(30,58,95,.95),rgba(49,93,120,.84)),url(assets/football-detail.jpg) center/cover;color:white;padding:17px;border-radius:16px;margin-bottom:12px;`;
     header.innerHTML = `<div style="font-size:11px;font-weight:800;letter-spacing:2px;opacity:.8">MATCHTRACKER · ${escapeHtml(period.toUpperCase())}</div><div style="font-size:23px;font-weight:900;margin-top:5px">${escapeHtml(title)}</div><div style="font-size:13px;opacity:.85;margin-top:4px">${escapeHtml(subtitle || "")}</div>`; root.appendChild(header);
     return header;
   }
@@ -56,7 +57,7 @@
     substitutes.forEach((p,i)=>{ const row=btn(`${p.number ? "#"+p.number+" · " : ""}${p.name} · CHANGE`, C.bg, ()=>changeBench(i)); row.style.cssText += `;width:100%;margin-top:6px;color:${C.ink};text-align:left`; b.appendChild(row); });
     const actions=card(); actions.style.display="grid"; actions.style.gap="8px";
     actions.appendChild(btn("OPEN MATCH CENTRE →", C.green, renderPreKickoff, starters.length !== 11));
-    actions.appendChild(btn("← Back to Starting XI", "#64748B", ()=>callbacks.onBack && callbacks.onBack(match)));
+    actions.appendChild(btn("← Back to Team Selection", "#64748B", ()=>callbacks.onBack && callbacks.onBack(match)));
   }
   function masterPlayers() {
     return (window.MatchTrackerStorage?.loadPlayers?.() || []).filter(p => p && p.id !== undefined && p.name);
@@ -117,11 +118,11 @@
     const starters=Array.isArray(match.startingXI)?match.startingXI:[];
     const substitutes=Array.isArray(match.substitutes)?match.substitutes.slice(0,6):[];
     if(starters.length!==11){alert(`You need exactly 11 starting players before kick-off. Current selection: ${starters.length}/11.`);return;}
-    clearInterval(timer); elapsed=0; period="First Half"; eventRows=[];
+    clearInterval(timer); elapsed=0; halfElapsed=0; period="First Half"; eventRows=[];
     playerStats={}; teamStats={home:{goals:0,shotsOn:0,shotsOff:0,corners:0,freeKicks:0,offsides:0,yellow:0,red:0,penalties:0},away:{goals:0,shotsOn:0,shotsOff:0,corners:0,freeKicks:0,offsides:0,yellow:0,red:0,penalties:0}};
     starters.concat(substitutes).forEach(p=>playerStats[p.name]={goals:0,assists:0,shotsOn:0,shotsOff:0,yellow:0,red:0,minutes:0});
     playerEnteredAt={};playerSeconds={};starterNames=new Set(starters.map(p=>p.name));appearedNames=new Set(starters.map(p=>p.name));starters.forEach(p=>playerEnteredAt[p.name]=0);
-    persist({substitutes,status:"live",startedAt:new Date().toISOString(),events:[],statistics:{team:teamStats,players:playerStats},score:{home:0,away:0},period,elapsedSeconds:0,playerEnteredAt,playerSeconds,starterNames:Array.from(starterNames),appearedPlayerNames:Array.from(appearedNames)});
+    persist({substitutes,status:"live",startedAt:new Date().toISOString(),events:[],statistics:{team:teamStats,players:playerStats},score:{home:0,away:0},period,elapsedSeconds:0,halfElapsedSeconds:0,playerEnteredAt,playerSeconds,starterNames:Array.from(starterNames),appearedPlayerNames:Array.from(appearedNames)});
     renderLive();startTimer();
   }
 
@@ -142,14 +143,31 @@
     const names = new Set(Object.keys(playerEnteredAt || {}));
     return (match.startingXI || []).concat(match.substitutes || []).filter(p => names.has(p.name));
   }
-  function startTimer(){ clearInterval(timer); timer=setInterval(()=>{ elapsed++; const el=root?.querySelector("#mtLiveClock"); if(el) el.textContent=formatTime(elapsed); if(elapsed % 5 === 0 && match?.status === "live") persist({elapsedSeconds:elapsed,period,playerEnteredAt,playerSeconds,appearedPlayerNames:Array.from(appearedNames)}); },1000); }
+  function clockReadings(){
+    const secondHalf = period === "Second Half";
+    const threshold = secondHalf ? 5400 : 2700;
+    const base = secondHalf ? 5400 : 2700;
+    const extra = Math.max(0, elapsed - threshold);
+    const main = extra > 0 ? `${secondHalf ? "90" : "45"}+${formatTime(extra)}` : formatTime(elapsed);
+    const half = secondHalf
+      ? (halfElapsed > 2700 ? `45+${formatTime(halfElapsed-2700)}` : formatTime(halfElapsed))
+      : (elapsed > 2700 ? `45+${formatTime(elapsed-2700)}` : formatTime(elapsed));
+    return {main, half, stoppage: extra > 0 || (!secondHalf && elapsed > 2700)};
+  }
+  function updateClockDisplay(){
+    const t=clockReadings(), main=root?.querySelector("#mtLiveClock"), half=root?.querySelector("#mtHalfClock"), label=root?.querySelector("#mtClockStage");
+    if(main){main.textContent=t.main;main.style.color=t.stoppage?"#FF7777":"#FFFFFF"}
+    if(half){half.textContent=t.half;half.style.color=t.stoppage?"#FF7777":"#FFFFFF"}
+    if(label)label.textContent=period==="Second Half"?"SECOND HALF CLOCK":"FIRST HALF CLOCK";
+  }
+  function startTimer(){ clearInterval(timer); timer=setInterval(()=>{ elapsed++; halfElapsed++; updateClockDisplay(); if(elapsed % 5 === 0 && match?.status === "live") persist({elapsedSeconds:elapsed,halfElapsedSeconds:halfElapsed,period,playerEnteredAt,playerSeconds,appearedPlayerNames:Array.from(appearedNames)}); },1000); }
   function renderLive(){
     clearInterval(timer); elapsed=Number(match.elapsedSeconds||elapsed||0); period=match.period||period||"First Half";
     const isPreStart = !["live", "half-time"].includes(String(match.status || "").toLowerCase());
     const liveHeader = shell("LIVE MATCH",`${match.opponent || "Opponent"} · ${match.venue || "Venue TBC"}`);
     const anim = document.createElement("style"); anim.textContent="@keyframes mtScorePulse{0%{transform:scale(1)}35%{transform:scale(1.06)}100%{transform:scale(1)}} #mtHomeScore,#mtAwayScore{display:inline-block;animation:mtScorePulse .35s ease-out}"; liveHeader.appendChild(anim);
     const score=card(); score.style.cssText += ";background:linear-gradient(135deg,#17375E,#244E78);color:#fff;padding:22px 14px;text-align:center;border-radius:20px;box-shadow:0 8px 24px rgba(30,58,95,.2)";
-    score.innerHTML=`<div style="font-size:11px;color:#D6E4F0;font-weight:900;letter-spacing:2px">${isPreStart ? "MATCH STATUS · NOT STARTED" : escapeHtml(period.toUpperCase())}</div><div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin:15px 0"><div><div style="font-size:12px;color:#D6E4F0;font-weight:800">YOUR TEAM</div><div id="mtHomeScore" style="font-size:52px;font-weight:900;line-height:1.1">${Number(match.score?.home||0)}</div></div><div style="font-size:22px;color:#D6E4F0;font-weight:700">–</div><div><div style="font-size:12px;color:#D6E4F0;font-weight:800">${escapeHtml((match.opponent||"OPPONENT").toUpperCase())}</div><div id="mtAwayScore" style="font-size:52px;font-weight:900;line-height:1.1">${Number(match.score?.away||0)}</div></div></div><div id="mtLiveClock" style="display:inline-block;font-variant-numeric:tabular-nums;font-size:34px;font-weight:900;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:7px 20px">${formatTime(elapsed)}</div><div style="font-size:12px;color:#D6E4F0;margin-top:9px">${isPreStart ? "Clock stopped · Ready for kick-off" : "MATCH IN PROGRESS"}</div>`;
+    score.innerHTML=`<div style="font-size:11px;color:#D6E4F0;font-weight:900;letter-spacing:2px">${isPreStart ? "MATCH STATUS · NOT STARTED" : escapeHtml(period.toUpperCase())}</div><div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin:15px 0"><div><div style="font-size:12px;color:#D6E4F0;font-weight:800">YOUR TEAM</div><div id="mtHomeScore" style="font-size:52px;font-weight:900;line-height:1.1">${Number(match.score?.home||0)}</div></div><div style="font-size:22px;color:#D6E4F0;font-weight:700">–</div><div><div style="font-size:12px;color:#D6E4F0;font-weight:800">${escapeHtml((match.opponent||"OPPONENT").toUpperCase())}</div><div id="mtAwayScore" style="font-size:52px;font-weight:900;line-height:1.1">${Number(match.score?.away||0)}</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><div style="background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:9px 5px"><div style="font-size:10px;font-weight:800;letter-spacing:1px;color:#D6E4F0">MAIN MATCH CLOCK</div><div id="mtLiveClock" style="font-variant-numeric:tabular-nums;font-size:29px;font-weight:900">${clockReadings().main}</div></div><div style="background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:9px 5px"><div id="mtClockStage" style="font-size:10px;font-weight:800;letter-spacing:1px;color:#D6E4F0">${period==="Second Half"?"SECOND HALF CLOCK":"FIRST HALF CLOCK"}</div><div id="mtHalfClock" style="font-variant-numeric:tabular-nums;font-size:29px;font-weight:900">${clockReadings().half}</div></div></div><div style="font-size:12px;color:#D6E4F0;margin-top:9px">${isPreStart ? "Clock stopped · Ready for kick-off" : "MATCH IN PROGRESS"}</div>`;
     if(isPreStart){const start=btn("▶  START MATCH",C.green,startActualMatch,(match.startingXI||[]).length!==11);start.style.cssText+=";width:100%;min-height:56px;font-size:17px;border-radius:14px;letter-spacing:.4px";score.appendChild(start);}
     const actions=card(); actions.style.cssText += ";padding:15px";
     actions.innerHTML='<div style="font-size:18px;font-weight:900;margin-bottom:4px">Quick Match Events</div><div style="font-size:12px;color:'+C.muted+';margin-bottom:12px">The four actions used most often are ready here. Other events are grouped below.</div>';
@@ -162,8 +180,8 @@
     more.appendChild(extra);actions.appendChild(more);
     const state=card(); state.style.display="grid"; state.style.gridTemplateColumns="repeat(2,minmax(0,1fr))"; state.style.gap="8px";
     if(!isPreStart){
-      state.appendChild(btn("HALF TIME","#B45309",()=>{clearInterval(timer);period="Half Time";persist({status:"half-time",period,elapsedSeconds:elapsed,events:eventRows,statistics:teamStats,score:match.score});renderLive();}));
-      state.appendChild(btn("SECOND HALF",C.navy,()=>{period="Second Half";persist({status:"live",period,elapsedSeconds:elapsed});renderLive();startTimer();}));
+      state.appendChild(btn("HALF TIME","#B45309",()=>{clearInterval(timer);period="Half Time";persist({status:"half-time",period,elapsedSeconds:elapsed,halfElapsedSeconds:halfElapsed,events:eventRows,statistics:teamStats,score:match.score});renderLive();}));
+      state.appendChild(btn("SECOND HALF",C.navy,()=>{period="Second Half";elapsed=2700;halfElapsed=0;persist({status:"live",period,elapsedSeconds:elapsed,halfElapsedSeconds:halfElapsed});renderLive();startTimer();}));
       state.appendChild(btn("FULL TIME · SAVE MATCH",C.red,finishMatch));
       state.appendChild(btn("Undo Last Event","#64748B",undoEvent));
     } else {
@@ -180,7 +198,7 @@
     const oppList=Array.isArray(match.opponentPlayers)?match.opponentPlayers:[];
     const oppForm=document.createElement("form");oppForm.style.cssText="display:flex;gap:8px;align-items:center;margin-bottom:10px";
     const numberInput=document.createElement("input");numberInput.type="number";numberInput.min="1";numberInput.max="99";numberInput.placeholder="Jersey no.";numberInput.setAttribute("aria-label","Opposition jersey number");numberInput.style.cssText="width:110px;min-width:0;min-height:44px;padding:8px 10px;border:1px solid #CBD5E1;border-radius:10px;font-size:16px;box-sizing:border-box";
-    const addOpp=btn("+ ADD PLAYER",C.green,()=>{});addOpp.type="submit";addOpp.style.cssText+=";flex:1";oppForm.append(numberInput,addOpp);oppForm.onsubmit=e=>{e.preventDefault();const n=String(numberInput.value||"").trim();if(!n||Number(n)<1||Number(n)>99){alert("Enter a jersey number from 1 to 99.");return;}if(oppList.some(p=>String(p.number)===n)){alert("That opposition jersey number is already in the list.");return;}oppList.push({id:"opp_"+n,number:n,name:"#"+n});match.opponentPlayers=oppList;persist({opponentPlayers:oppList});renderLive();};opposition.appendChild(oppForm);
+    const addOpp=btn("+ ADD PLAYER",C.green,()=>{});addOpp.type="submit";addOpp.style.cssText+=";flex:1";numberInput.disabled=oppList.length>=11;addOpp.disabled=oppList.length>=11; if(oppList.length>=11){numberInput.placeholder="11 players added";addOpp.textContent="SQUAD FULL";} oppForm.append(numberInput,addOpp);oppForm.onsubmit=e=>{e.preventDefault();const n=String(numberInput.value||"").trim();if(oppList.length>=11){alert("The opposition match squad is limited to 11 active players.");return;}if(!n||Number(n)<1||Number(n)>99){alert("Enter a jersey number from 1 to 99.");return;}if(oppList.some(p=>String(p.number)===n)){alert("That opposition jersey number is already in the list.");return;}oppList.push({id:"opp_"+n,number:n,name:"#"+n});match.opponentPlayers=oppList;persist({opponentPlayers:oppList});renderLive();};opposition.appendChild(oppForm);
     if(!oppList.length){const empty=document.createElement("div");empty.textContent="No opposition players added yet.";empty.style.cssText="font-size:13px;color:"+C.muted+";padding:8px 0";opposition.appendChild(empty);}else{const chips=document.createElement("div");chips.style.cssText="display:flex;flex-wrap:wrap;gap:7px";oppList.forEach((p,i)=>{const chip=btn("#"+p.number+"  ×",C.bg,()=>{if(!confirm("Remove opposition player #"+p.number+"?"))return;oppList.splice(i,1);match.opponentPlayers=oppList;persist({opponentPlayers:oppList});renderLive();});chip.style.cssText+=";color:"+C.ink+";border:1px solid #D8E0E8;min-width:64px";chips.appendChild(chip)});opposition.appendChild(chips);}
     const stats=card(); stats.innerHTML='<div style="font-size:18px;font-weight:900;margin-bottom:8px">Live Stats</div>';
     const ts=match.statistics?.team||teamStats; const home=ts.home||{}, away=ts.away||{};
@@ -192,13 +210,20 @@
   }
   function opponentSubstitution() {
     const players=(Array.isArray(match.opponentPlayers)?match.opponentPlayers:[]).map(p=>({id:p.id,number:p.number,name:"#"+p.number}));
-    if(players.length<2){alert("Add at least two opposition jersey numbers before recording an opposition substitution.");return;}
-    showPicker("Opposition player coming OFF",players,false,off=>{
-      showPicker("Opposition player coming ON",players.filter(p=>p.id!==off),false,on=>{
-        if(!off||!on)return;
-        eventRows.push({id:`ev_${Date.now()}`,seconds:elapsed,period,type:"Substitution",team:"away",player:`${off.name} OFF · ${on.name} ON`});
-        persist({events:eventRows,elapsedSeconds:elapsed,period,opponentPlayers:match.opponentPlayers});renderLive();
-      });
+    if(!players.length){alert("Add the opposition's starting 11 before recording a substitution.");return;}
+    showPicker("Select opposition player coming OFF",players,false,offName=>{
+      const off=players.find(p=>p.name===offName);
+      if(!off)return;
+      const overlay=document.createElement("div");
+      overlay.style.cssText="position:fixed;inset:0;z-index:20001;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box";
+      const panel=document.createElement("div");panel.style.cssText="width:100%;max-width:390px;background:#fff;border-radius:17px;padding:20px;box-sizing:border-box";
+      const heading=document.createElement("h2");heading.textContent="Opposition player coming ON";heading.style.cssText="margin:0 0 8px;color:"+C.navy+";font-size:21px";
+      const help=document.createElement("p");help.textContent=`Player #${off.number} is coming off. Enter the shirt number of the replacement.`;help.style.cssText="font-size:14px;color:"+C.muted+";line-height:1.4";
+      const input=document.createElement("input");input.type="number";input.min="1";input.max="99";input.inputMode="numeric";input.placeholder="New player's shirt number";input.style.cssText="width:100%;box-sizing:border-box;min-height:54px;padding:12px;border:1px solid #CBD5E1;border-radius:11px;font-size:18px;margin:8px 0 14px";
+      const actions=document.createElement("div");actions.style.cssText="display:grid;grid-template-columns:1fr 1fr;gap:9px";
+      const cancel=btn("Cancel",C.navy,()=>overlay.remove());
+      const save=btn("Confirm Sub",C.green,()=>{const n=String(input.value||"").trim();if(!n||Number(n)<1||Number(n)>99){alert("Enter a shirt number from 1 to 99.");return;}if(players.some(p=>p.id!==off.id&&String(p.number)===n)){alert("That shirt number is already in the active opposition list.");return;}const list=(match.opponentPlayers||[]).slice();const index=list.findIndex(p=>String(p.id)===String(off.id));if(index<0){alert("The selected opposition player could not be found.");overlay.remove();return;}list.splice(index,1,{id:"opp_"+n+"_"+Date.now(),number:n,name:"#"+n});eventRows.push({id:`ev_${Date.now()}`,seconds:elapsed,period,type:"Substitution",team:"away",player:`#${off.number} OFF · #${n} ON`});match.opponentPlayers=list;persist({events:eventRows,elapsedSeconds:elapsed,period,opponentPlayers:list});overlay.remove();renderLive();});
+      actions.append(cancel,save);panel.append(heading,help,input,actions);overlay.appendChild(panel);overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.remove()});document.body.appendChild(overlay);input.focus();
     });
   }
   function record(type, team) {
@@ -254,13 +279,44 @@
     showPicker("Select player coming OFF", onPitch, false, off => {
       showPicker("Select substitute coming ON", bench, false, on => {
         if (!off || !on) return;
-        if (!playerStats[off]) playerStats[off] = {goals:0,assists:0,shotsOn:0,shotsOff:0,yellow:0,red:0,minutes:0};
-        if (!playerStats[on]) playerStats[on] = {goals:0,assists:0,shotsOn:0,shotsOff:0,yellow:0,red:0,minutes:0};
-        if (playerEnteredAt[off] !== undefined) { playerSeconds[off] = (playerSeconds[off] || 0) + Math.max(0, elapsed - Number(playerEnteredAt[off])); delete playerEnteredAt[off]; }
-        playerEnteredAt[on] = elapsed; appearedNames.add(on);
-        eventRows.push({id:`ev_${Date.now()}`,seconds:elapsed,period,type:"Substitution",team:"home",player:`${off} OFF · ${on} ON`});
-        persist({events:eventRows,elapsedSeconds:elapsed,period,playerEnteredAt,playerSeconds,starterNames:Array.from(starterNames),appearedPlayerNames:Array.from(appearedNames),statistics:{team:teamStats||match.statistics?.team,players:playerStats}});
-        renderLive();
+        const overlay=document.createElement("div");
+        overlay.style.cssText="position:fixed;inset:0;z-index:20002;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box";
+        const panel=document.createElement("div");panel.style.cssText="width:100%;max-width:420px;max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-sizing:border-box;box-shadow:0 18px 50px rgba(0,0,0,.22)";
+        const heading=document.createElement("h2");heading.textContent="Substitution details";heading.style.cssText="margin:0 0 8px;color:"+C.navy+";font-size:22px";
+        const summary=document.createElement("p");summary.textContent=`${off} OFF  →  ${on} ON`;summary.style.cssText="margin:0 0 16px;color:"+C.muted+";font-size:15px;font-weight:800";
+        const label=document.createElement("label");label.textContent="Substitution reason";label.style.cssText="display:block;margin:10px 0 6px;font-weight:800;color:"+C.ink;
+        const reason=document.createElement("select");reason.style.cssText="width:100%;min-height:52px;box-sizing:border-box;padding:10px 12px;border:1px solid #CBD5E1;border-radius:11px;background:white;color:"+C.ink+";font-size:17px";
+        [["normal","Normal"],["injury","Injury"],["player request","Player Request"],["other","Other"]].forEach(([v,t])=>{const o=document.createElement("option");o.value=v;o.textContent=t;reason.appendChild(o)});
+        const injuryWrap=document.createElement("div");injuryWrap.style.cssText="display:none;margin-top:12px";
+        const injuryLabel=document.createElement("label");injuryLabel.textContent="Injury sustained";injuryLabel.style.cssText="display:block;margin-bottom:6px;font-weight:800;color:"+C.ink;
+        const injury=document.createElement("input");injury.type="text";injury.placeholder="Describe the injury";injury.style.cssText="width:100%;min-height:50px;box-sizing:border-box;padding:10px 12px;border:1px solid #CBD5E1;border-radius:11px;font-size:16px";
+        injuryWrap.append(injuryLabel,injury);
+        reason.onchange=()=>{injuryWrap.style.display=reason.value==="injury"?"block":"none"};
+        const actions=document.createElement("div");actions.style.cssText="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px";
+        const cancel=btn("Cancel",C.navy,()=>overlay.remove());
+        const save=btn("Confirm substitution",C.green,()=>{
+          const reasonValue=reason.value;
+          const injuryDetail=injury.value.trim();
+          if(reasonValue==="injury"&&!injuryDetail){alert("Please enter the injury sustained.");injury.focus();return;}
+          if(!playerStats[off])playerStats[off]={goals:0,assists:0,shotsOn:0,shotsOff:0,yellow:0,red:0,minutes:0};
+          if(!playerStats[on])playerStats[on]={goals:0,assists:0,shotsOn:0,shotsOff:0,yellow:0,red:0,minutes:0};
+          if(playerEnteredAt[off]!==undefined){playerSeconds[off]=(playerSeconds[off]||0)+Math.max(0,elapsed-Number(playerEnteredAt[off]));delete playerEnteredAt[off];}
+          playerEnteredAt[on]=elapsed;appearedNames.add(on);
+          eventRows.push({id:`ev_${Date.now()}`,seconds:elapsed,period,type:"Substitution",team:"home",player:`${off} OFF · ${on} ON`,reason:reasonValue,...(reasonValue==="injury"?{injury:injuryDetail}:{})});
+          if(reasonValue==="injury"){
+            const squadPlayer=(match.matchdaySquad||[]).find(p=>p.name===off);
+            if(squadPlayer){
+              const records=window.MatchTrackerStorage.loadAvailability()||[];
+              const playerId=squadPlayer.sourceId||squadPlayer.id;
+              const exists=records.some(r=>String(r.playerId)===String(playerId)&&r.status!=="cleared");
+              if(!exists)records.push({id:`absence_${Date.now()}`,playerId,playerName:off,reason:"injured",status:"active",startDate:new Date().toISOString().slice(0,10),returnDate:"",note:injuryDetail,matchId:match.id});
+              window.MatchTrackerStorage.saveAvailability(records);
+            }
+          }
+          persist({events:eventRows,elapsedSeconds:elapsed,period,playerEnteredAt,playerSeconds,starterNames:Array.from(starterNames),appearedPlayerNames:Array.from(appearedNames),statistics:{team:teamStats||match.statistics?.team,players:playerStats}});
+          overlay.remove();renderLive();
+        });
+        actions.append(cancel,save);label.appendChild(reason);panel.append(heading,summary,label,injuryWrap,actions);overlay.appendChild(panel);overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.remove()});document.body.appendChild(overlay);
       });
     });
   }

@@ -1,497 +1,189 @@
 // ============================================================
-// MATCHTRACKER — PRE SEASON STARTING XI
+// MATCHTRACKER — STARTING XI SELECTION
 // ============================================================
-// Build the Starting XI by dragging players onto a football
-// pitch. The coach does NOT choose a named formation first.
-//
-// Players are dropped approximately where the coach wants them.
-// MatchTracker snaps each player to the nearest invisible grid
-// position and derives a simple shape from the vertical lines.
-// The saved match keeps both the selected players and their
-// visual pitch positions so this same pitch model can later be
-// reused by the live match screen.
+// Select the starting eleven from the matchday squad using a
+// simple player list. No drag-and-drop pitch interaction.
+// Remaining matchday players are automatically assigned to bench.
 // ============================================================
-
 (function (window) {
   "use strict";
 
   const COLORS = {
-    navy: "#1E3A5F",
-    blueGreen: "#3F7D70",
-    lightGrey: "#F1F4F6",
-    darkText: "#243447",
-    white: "#FFFFFF",
-    silver: "#B8C2CC",
-    muted: "#5C6B78",
-    pitch: "#5B8E62",
-    pitchLine: "rgba(255,255,255,.72)",
-    danger: "#B42318"
+    navy: "#1E3A5F", blueGreen: "#3F7D70", lightGrey: "#F1F4F6",
+    darkText: "#243447", white: "#FFFFFF", silver: "#B8C2CC",
+    muted: "#5C6B78", danger: "#B42318"
   };
 
-  // 13 columns x 13 rows gives the coach finer tactical control
-  // while still keeping positions clean and consistent.
-  const GRID_COLS = 17;
-  const GRID_ROWS = 21;
+  const POSITIONS = [
+    "Goalkeeper", "Right Back", "Centre Back", "Left Back",
+    "Defensive Midfield", "Central Midfield", "Attacking Midfield",
+    "Right Midfield", "Left Midfield", "Right Wing", "Left Wing", "Striker"
+  ];
+  const FORMATIONS = ["4-4-2", "4-3-3", "4-2-3-1", "3-5-2", "4-1-4-1", "4-3-2-1"];
 
   let callbacks = { onBack: null, onSaved: null };
   let currentMatch = null;
   let availablePlayers = [];
-  let placed = new Map(); // playerId -> { player, col, row }
-  let activeDrag = null;
-  let tapPlayerId = null;
-
-  function maxStarters() {
-    // This rebuild currently supports 11-a-side only.
-    return 11;
-  }
+  let selected = new Map();
+  let selectedFormation = "4-3-3";
+  let containerRef = null;
 
   function init(options = {}) {
     callbacks.onBack = typeof options.onBack === "function" ? options.onBack : null;
     callbacks.onSaved = typeof options.onSaved === "function" ? options.onSaved : null;
     currentMatch = options.match || null;
-    availablePlayers = Array.isArray(currentMatch?.matchdaySquad)
-      ? currentMatch.matchdaySquad.slice()
-      : [];
+    availablePlayers = Array.isArray(currentMatch?.matchdaySquad) ? currentMatch.matchdaySquad.slice(0, 17) : [];
+    selected = new Map();
+    selectedFormation = FORMATIONS.includes(currentMatch?.formation) ? currentMatch.formation : "4-3-3";
 
-    placed = new Map();
-
-    const saved = Array.isArray(currentMatch?.startingXIPositions)
-      ? currentMatch.startingXIPositions
-      : [];
-
-    saved.forEach(item => {
-      if (!item || item.id == null) return;
-      const player = availablePlayers.find(p => String(p.id) === String(item.id));
+    const saved = Array.isArray(currentMatch?.startingXI) ? currentMatch.startingXI : [];
+    saved.slice(0, 11).forEach((savedPlayer, index) => {
+      const player = availablePlayers.find(p => String(p.id) === String(savedPlayer.id));
       if (!player) return;
-      placed.set(String(player.id), {
+      selected.set(String(player.id), {
         player: normalisePlayer(player),
-        col: clamp(Number(item.col), 0, GRID_COLS - 1),
-        row: clamp(Number(item.row), 0, GRID_ROWS - 1)
+        position: typeof savedPlayer.position === "string"
+          ? savedPlayer.position
+          : (savedPlayer.position?.label || POSITIONS[index] || "Central Midfield")
       });
     });
   }
 
   function render(container) {
     if (!container) return;
+    containerRef = container;
     container.innerHTML = "";
     container.style.cssText = `background:${COLORS.lightGrey};color:${COLORS.darkText};min-height:100vh;box-sizing:border-box;padding:16px;`;
 
     const header = document.createElement("div");
     header.style.cssText = `background:${COLORS.navy};color:${COLORS.white};border-radius:18px;padding:20px;margin-bottom:14px;box-shadow:0 4px 12px rgba(0,0,0,.08);`;
-    header.innerHTML = `
-      <div style="font-size:12px;font-weight:800;letter-spacing:2px;opacity:.75;margin-bottom:5px">PRE SEASON</div>
-      <div style="font-size:27px;font-weight:800;line-height:1.15">Starting XI</div>
-      <div style="font-size:14px;margin-top:7px;opacity:.9">Select exactly 11 starters. Drag players onto the pitch to set their positions; remaining selected players will automatically become substitutes.</div>
-    `;
+    header.innerHTML = `<div style="font-size:12px;font-weight:800;letter-spacing:2px;opacity:.75;margin-bottom:5px">PRE SEASON</div><div style="font-size:27px;font-weight:800;line-height:1.15">Starting XI</div><div style="font-size:14px;margin-top:7px;opacity:.9">Select your 11 starters from the match squad and assign their positions. No pitch dragging required.</div>`;
     container.appendChild(header);
 
     const matchCard = document.createElement("div");
     matchCard.style.cssText = `background:${COLORS.white};border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 3px 10px rgba(0,0,0,.06);`;
-    matchCard.innerHTML = `
-      <div style="font-size:19px;font-weight:800">vs ${escapeHtml(currentMatch?.opponent || "Opponent TBC")}</div>
-      <div id="mtXIShape" style="font-size:13px;color:${COLORS.muted};margin-top:5px">Shape: Not set</div>
-    `;
+    matchCard.innerHTML = `<div style="font-size:19px;font-weight:800">vs ${escapeHtml(currentMatch?.opponent || "Opponent TBC")}</div><div style="font-size:13px;color:${COLORS.muted};margin-top:5px">Choose a formation, then select and position your starting players.</div>`;
     container.appendChild(matchCard);
 
-    const pitchCard = document.createElement("div");
-    pitchCard.style.cssText = `background:${COLORS.white};border-radius:16px;padding:12px;box-shadow:0 3px 10px rgba(0,0,0,.06);`;
-    container.appendChild(pitchCard);
+    const formationCard = card();
+    formationCard.innerHTML = `<div style="font-size:17px;font-weight:800;margin-bottom:8px">Formation</div>`;
+    const formationSelect = document.createElement("select");
+    formationSelect.style.cssText = inputStyle();
+    FORMATIONS.forEach(value => {
+      const option = document.createElement("option"); option.value = value; option.textContent = value;
+      formationSelect.appendChild(option);
+    });
+    formationSelect.value = selectedFormation;
+    formationSelect.onchange = () => { selectedFormation = formationSelect.value; };
+    formationCard.appendChild(formationSelect);
+    container.appendChild(formationCard);
 
-    const pitch = document.createElement("div");
-    pitch.id = "mtStartingXIPitch";
-    pitch.style.cssText = `position:relative;width:100%;max-width:460px;aspect-ratio:72/105;margin:0 auto;border-radius:12px;background:${COLORS.pitch};overflow:hidden;touch-action:none;box-sizing:border-box;border:2px solid rgba(255,255,255,.8);`;
-    pitch.setAttribute("aria-label", "Starting XI football pitch");
-    pitchCard.appendChild(pitch);
-    drawPitch(pitch);
+    const selectedCard = card();
+    selectedCard.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div style="font-size:17px;font-weight:800">Starting XI</div><div id="mtXIStatus" style="font-size:14px;font-weight:900;color:${COLORS.blueGreen}">0 / 11</div></div><div style="font-size:12px;color:${COLORS.muted};margin-top:4px">Set a position for each selected player. Tap Remove to return them to the available list.</div>`;
+    const selectedList = document.createElement("div"); selectedList.id = "mtXISelectedList";
+    selectedList.style.cssText = "display:flex;flex-direction:column;gap:9px;margin-top:12px;";
+    selectedCard.appendChild(selectedList);
+    container.appendChild(selectedCard);
 
-    const helper = document.createElement("div");
-    helper.style.cssText = `max-width:460px;margin:10px auto 0;color:${COLORS.muted};font-size:13px;text-align:center;`;
-    helper.innerHTML = `<strong>Drag</strong> a player roughly where you want them. The player will snap to the nearest grid position. You can also <strong>tap a player</strong>, then tap a pitch position.`;
-    pitchCard.appendChild(helper);
-
-    const poolCard = document.createElement("div");
-    poolCard.style.cssText = `background:${COLORS.white};border-radius:16px;padding:15px;margin-top:14px;box-shadow:0 3px 10px rgba(0,0,0,.06);`;
-    poolCard.innerHTML = `<div style="font-size:19px;font-weight:800">Available Players</div><div style="font-size:13px;color:${COLORS.muted};margin-top:3px">Players not yet placed on the pitch.</div>`;
-    const pool = document.createElement("div");
-    pool.id = "mtXIPlayerPool";
-    pool.style.cssText = "display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:12px;";
-    poolCard.appendChild(pool);
-    container.appendChild(poolCard);
-
-    const status = document.createElement("div");
-    status.id = "mtXIStatus";
-    status.style.cssText = `margin-top:12px;background:${COLORS.white};border:1px solid #E1E6EA;border-radius:12px;padding:12px 14px;font-size:14px;font-weight:700;`;
-    container.appendChild(status);
+    const availableCard = card();
+    availableCard.innerHTML = `<div style="font-size:17px;font-weight:800">Available Match Squad</div><div style="font-size:12px;color:${COLORS.muted};margin-top:4px">Select up to 11 players. The remaining players will automatically be placed on the bench.</div>`;
+    const availableList = document.createElement("div"); availableList.id = "mtXIAvailableList";
+    availableList.style.cssText = "display:flex;flex-direction:column;gap:8px;margin-top:12px;";
+    availableCard.appendChild(availableList);
+    container.appendChild(availableCard);
 
     const actions = document.createElement("div");
-    actions.style.cssText = "max-width:460px;margin:14px auto 0;display:flex;flex-direction:column;gap:9px;";
-
+    actions.style.cssText = "display:flex;flex-direction:column;gap:9px;margin:14px auto 0;max-width:650px;";
     const save = button("Save Starting XI", COLORS.blueGreen, COLORS.white);
-    save.onclick = () => saveStartingXI();
-    actions.appendChild(save);
-
-    const clear = button("Clear Pitch", COLORS.white, COLORS.navy);
-    clear.style.border = `1px solid ${COLORS.silver}`;
-    clear.onclick = () => {
-      placed.clear();
-      tapPlayerId = null;
-      refresh(container);
-    };
-    actions.appendChild(clear);
-
+    save.onclick = saveStartingXI;
     const back = button("← Back to Match Squad", COLORS.white, COLORS.darkText);
     back.style.border = `1px solid ${COLORS.silver}`;
     back.onclick = () => callbacks.onBack && callbacks.onBack();
-    actions.appendChild(back);
-
-    container.appendChild(actions);
-
-    refresh(container);
-    installPitchPointerHandlers(pitch, container);
+    actions.append(save, back); container.appendChild(actions);
+    refresh();
   }
 
-  function refresh(container) {
-    const pitch = container.querySelector("#mtStartingXIPitch");
-    const pool = container.querySelector("#mtXIPlayerPool");
-    const status = container.querySelector("#mtXIStatus");
-    const shape = container.querySelector("#mtXIShape");
-    if (!pitch || !pool) return;
+  function refresh() {
+    if (!containerRef) return;
+    const selectedList = containerRef.querySelector("#mtXISelectedList");
+    const availableList = containerRef.querySelector("#mtXIAvailableList");
+    const status = containerRef.querySelector("#mtXIStatus");
+    if (!selectedList || !availableList) return;
+    selectedList.innerHTML = ""; availableList.innerHTML = "";
+    status.textContent = `${selected.size} / 11`;
+    status.style.color = selected.size === 11 ? COLORS.blueGreen : COLORS.navy;
 
-    pitch.querySelectorAll(".mt-xi-player").forEach(node => node.remove());
-    pool.innerHTML = "";
+    if (!selected.size) {
+      const empty = document.createElement("div");
+      empty.textContent = "No starting players selected yet.";
+      empty.style.cssText = `padding:14px;border:1px dashed ${COLORS.silver};border-radius:10px;color:${COLORS.muted};text-align:center;font-size:13px;`;
+      selectedList.appendChild(empty);
+    }
 
-    const occupied = new Set();
-    placed.forEach(item => occupied.add(`${item.col}:${item.row}`));
-
-    placed.forEach(item => {
-      const card = createPitchPlayer(item, pitch, container);
-      pitch.appendChild(card);
+    selected.forEach((entry, id) => {
+      const row = document.createElement("div");
+      row.style.cssText = `display:grid;grid-template-columns:minmax(0,1fr) minmax(130px, .9fr);gap:8px;align-items:center;padding:10px;border:1px solid #E1E6EA;border-radius:10px;background:${COLORS.lightGrey};`;
+      const name = document.createElement("div");
+      name.innerHTML = `<div style="font-weight:800;font-size:14px">${escapeHtml(entry.player.name)}</div><div style="font-size:11px;color:${COLORS.muted};margin-top:2px">Shirt #${escapeHtml(entry.player.number || "—")}</div>`;
+      const controls = document.createElement("div"); controls.style.cssText = "display:flex;gap:5px;align-items:center;";
+      const position = document.createElement("select"); position.style.cssText = inputStyle(); position.setAttribute("aria-label", `Position for ${entry.player.name}`);
+      POSITIONS.forEach(value => { const option = document.createElement("option"); option.value=value; option.textContent=value; position.appendChild(option); });
+      position.value = entry.position;
+      position.onchange = () => { entry.position = position.value; };
+      const remove = document.createElement("button"); remove.type="button"; remove.textContent="Remove";
+      remove.style.cssText = `border:1px solid ${COLORS.silver};border-radius:8px;background:${COLORS.white};color:${COLORS.navy};font-size:11px;font-weight:800;padding:8px 6px;min-height:38px;`;
+      remove.onclick = () => { selected.delete(id); refresh(); };
+      controls.append(position, remove); row.append(name, controls); selectedList.appendChild(row);
     });
 
     availablePlayers.forEach(player => {
-      const id = String(player.id);
-      if (placed.has(id)) return;
-      const card = createPoolPlayer(player, container);
-      pool.appendChild(card);
-    });
-
-    const count = placed.size;
-    const total = availablePlayers.length;
-    const maximum = maxStarters();
-    const inferred = inferShape();
-    if (shape) shape.textContent = inferred ? `Detected shape: ${inferred}` : "Detected shape: Not set";
-    if (status) {
-      status.innerHTML = `<strong>${count}</strong> / <strong>${maximum}</strong> starting players` +
-        ` <span style="color:${COLORS.muted}">(${total} available in match squad)</span>` +
-        (count >= maximum ? ` <span style="color:${COLORS.danger}">• Starting lineup full</span>` : "") +
-        (tapPlayerId ? ` <span style="color:${COLORS.blueGreen}">• Select a pitch position.</span>` : "") +
-        (count > 0 && inferred ? ` <span style="color:${COLORS.muted}">• ${escapeHtml(inferred)} shape</span>` : "");
-    }
-  }
-
-  function createPoolPlayer(player, container) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "mt-xi-pool-player";
-    btn.style.cssText = `min-height:52px;border:1px solid ${COLORS.silver};border-radius:10px;background:${COLORS.white};color:${COLORS.navy};font-weight:800;padding:8px 9px;cursor:pointer;touch-action:none;`;
-    btn.innerHTML = `<span style="display:block;font-size:15px">${escapeHtml(player.name || "Unnamed")}</span><span style="display:block;font-size:11px;color:${COLORS.muted};margin-top:2px">#${escapeHtml(String(player.number || "—"))}</span>`;
-    btn.addEventListener("pointerdown", function (event) {
-      if (event.pointerType === "mouse" && event.button !== 0) return;
-      startDrag(player, event, null, container);
-    });
-    btn.addEventListener("click", function () {
-      tapPlayerId = String(player.id);
-      refresh(container);
-    });
-    return btn;
-  }
-
-  function createPitchPlayer(item, pitch, container) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "mt-xi-player";
-    btn.dataset.playerId = String(item.player.id);
-    btn.style.cssText = `position:absolute;width:54px;min-height:38px;transform:translate(-50%,-50%);border:2px solid ${COLORS.white};border-radius:10px;background:${COLORS.navy};color:${COLORS.white};font-weight:800;padding:3px 4px;z-index:5;box-shadow:0 2px 6px rgba(0,0,0,.22);cursor:grab;touch-action:none;box-sizing:border-box;`;
-    positionNode(btn, item.col, item.row);
-    btn.innerHTML = `<span style="display:block;font-size:10px;line-height:1.05">${escapeHtml(item.player.name || "Unnamed")}</span><span style="display:block;font-size:9px;opacity:.82;margin-top:1px">#${escapeHtml(String(item.player.number || "—"))}</span>`;
-
-    btn.addEventListener("pointerdown", function (event) {
-      if (event.pointerType === "mouse" && event.button !== 0) return;
-      startDrag(item.player, event, { col: item.col, row: item.row }, container);
-    });
-    btn.addEventListener("click", function () {
-      tapPlayerId = String(item.player.id);
-      refresh(container);
-    });
-    return btn;
-  }
-
-  function startDrag(player, event, originalPosition, container) {
-    activeDrag = {
-      player: normalisePlayer(player),
-      originalPosition,
-      pointerId: event.pointerId
-    };
-    tapPlayerId = null;
-    try { event.currentTarget.setPointerCapture(event.pointerId); } catch (_) {}
-
-    const move = function (moveEvent) {
-      if (!activeDrag || moveEvent.pointerId !== activeDrag.pointerId) return;
-      // We deliberately don't redraw on every pointer move. The pitch
-      // remains stable and the final drop position is calculated from
-      // the pointer location on release.
-    };
-    const up = function (upEvent) {
-      if (!activeDrag || upEvent.pointerId !== activeDrag.pointerId) return;
-      document.removeEventListener("pointermove", move);
-      document.removeEventListener("pointerup", up);
-      document.removeEventListener("pointercancel", up);
-      finishDrag(upEvent, container);
-    };
-    document.addEventListener("pointermove", move);
-    document.addEventListener("pointerup", up);
-    document.addEventListener("pointercancel", up);
-  }
-
-  function finishDrag(event, container) {
-    const pitch = container.querySelector("#mtStartingXIPitch");
-    if (!pitch || !activeDrag) return;
-    const rect = pitch.getBoundingClientRect();
-    const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
-    const player = activeDrag.player;
-
-    if (inside) {
-      const playerId = String(player.id);
-      if (!placed.has(playerId) && placed.size >= maxStarters()) {
-        activeDrag = null;
-        alert(`This is a ${maxStarters()}-a-side match. The starting lineup cannot contain more than ${maxStarters()} players.`);
-        refresh(container);
-        return;
-      }
-      const point = pointerToGrid(event.clientX, event.clientY, rect);
-      const oldPosition = activeDrag.originalPosition;
-      const occupant = findPlayerAtCell(point.col, point.row, playerId);
-
-      if (occupant && oldPosition) {
-        // A placed player can swap positions with another placed player.
-        const other = placed.get(occupant);
-        placed.set(playerId, { player, col: point.col, row: point.row });
-        if (other) {
-          placed.set(occupant, { player: other.player, col: oldPosition.col, row: oldPosition.row });
-        }
-      } else {
-        const snapped = findNearestFreeCell(point.col, point.row, playerId);
-        if (snapped) {
-          placed.set(playerId, { player, col: snapped.col, row: snapped.row });
-        }
-      }
-    } else if (activeDrag.originalPosition) {
-      // Dragging an existing player outside the pitch returns them to the pool.
-      placed.delete(String(player.id));
-    }
-
-    activeDrag = null;
-    refresh(container);
-  }
-
-  function installPitchPointerHandlers(pitch, container) {
-    pitch.addEventListener("click", function (event) {
-      if (!tapPlayerId) return;
-      const rect = pitch.getBoundingClientRect();
-      const point = pointerToGrid(event.clientX, event.clientY, rect);
-      if (!placed.has(tapPlayerId) && placed.size >= maxStarters()) {
-        alert(`This is a ${maxStarters()}-a-side match. The starting lineup cannot contain more than ${maxStarters()} players.`);
-        tapPlayerId = null;
-        refresh(container);
-        return;
-      }
-      const snapped = findNearestFreeCell(point.col, point.row, tapPlayerId);
-      if (!snapped) return;
-      placed.delete(tapPlayerId);
-      placed.set(tapPlayerId, {
-        player: normalisePlayer(availablePlayers.find(p => String(p.id) === tapPlayerId)),
-        col: snapped.col,
-        row: snapped.row
-      });
-      tapPlayerId = null;
-      refresh(container);
+      const id = String(player.id); if (selected.has(id)) return;
+      const add = document.createElement("button"); add.type="button";
+      add.style.cssText = `display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:52px;padding:10px 12px;border:1px solid ${COLORS.silver};border-radius:10px;background:${COLORS.white};color:${COLORS.navy};text-align:left;cursor:pointer;`;
+      add.innerHTML = `<span><strong>${escapeHtml(player.name || "Unnamed Player")}</strong><small style="display:block;color:${COLORS.muted};margin-top:3px">Shirt #${escapeHtml(player.number || "—")}</small></span><strong style="font-size:20px;color:${COLORS.blueGreen}">＋</strong>`;
+      add.disabled = selected.size >= 11;
+      if (add.disabled) add.style.opacity = ".45";
+      add.onclick = () => {
+        if (selected.size >= 11) return;
+        selected.set(id, { player: normalisePlayer(player), position: defaultPosition(selected.size) });
+        refresh();
+      };
+      availableList.appendChild(add);
     });
   }
 
-  function drawPitch(pitch) {
-    const lines = document.createElement("div");
-    lines.style.cssText = "position:absolute;inset:0;pointer-events:none;";
-    lines.innerHTML = `
-      <div style="position:absolute;inset:4%;border:2px solid ${COLORS.pitchLine};border-radius:2px"></div>
-      <div style="position:absolute;left:4%;right:4%;top:50%;height:0;border-top:2px solid ${COLORS.pitchLine}"></div>
-      <div style="position:absolute;left:50%;top:4%;bottom:4%;width:0;border-left:2px solid ${COLORS.pitchLine}"></div>
-      <div style="position:absolute;left:32%;width:36%;height:16%;top:4%;border:2px solid ${COLORS.pitchLine};border-top:none"></div>
-      <div style="position:absolute;left:42%;width:16%;height:7%;top:4%;border:2px solid ${COLORS.pitchLine};border-top:none"></div>
-      <div style="position:absolute;left:32%;width:36%;height:16%;bottom:4%;border:2px solid ${COLORS.pitchLine};border-bottom:none"></div>
-      <div style="position:absolute;left:42%;width:16%;height:7%;bottom:4%;border:2px solid ${COLORS.pitchLine};border-bottom:none"></div>
-      <div style="position:absolute;left:50%;top:50%;width:9%;aspect-ratio:1;border:2px solid ${COLORS.pitchLine};border-radius:50%;transform:translate(-50%,-50%)"></div>
-    `;
-    pitch.appendChild(lines);
-  }
-
-  function positionNode(node, col, row) {
-    const x = 10 + (col / (GRID_COLS - 1)) * 80;
-    const y = 7 + (row / (GRID_ROWS - 1)) * 86;
-    node.style.left = `${x}%`;
-    node.style.top = `${y}%`;
-  }
-
-  function pointerToGrid(clientX, clientY, rect) {
-    const x = clamp((clientX - rect.left) / rect.width, 0, 1);
-    const y = clamp((clientY - rect.top) / rect.height, 0, 1);
-    return {
-      col: Math.round(x * (GRID_COLS - 1)),
-      row: Math.round(y * (GRID_ROWS - 1))
-    };
-  }
-
-  function findNearestFreeCell(col, row, playerId) {
-    const occupied = new Set();
-    placed.forEach((item, id) => {
-      if (id !== playerId) occupied.add(`${item.col}:${item.row}`);
-    });
-    if (!occupied.has(`${col}:${row}`)) return { col, row };
-
-    const cells = [];
-    for (let r = 0; r < GRID_ROWS; r++) {
-      for (let c = 0; c < GRID_COLS; c++) {
-        if (!occupied.has(`${c}:${r}`)) {
-          const dx = c - col;
-          const dy = r - row;
-          const distance = (dx * dx) + (dy * dy);
-          cells.push({ col: c, row: r, distance });
-        }
-      }
-    }
-    cells.sort((a, b) => a.distance - b.distance || a.row - b.row || a.col - b.col);
-    return cells[0] || null;
-  }
-
-  function findPlayerAtCell(col, row, excludeId) {
-    for (const [id, item] of placed.entries()) {
-      if (id !== excludeId && item.col === col && item.row === row) return id;
-    }
-    return null;
-  }
-
-  function inferShape() {
-    if (!placed.size) return "";
-    const rows = new Map();
-    placed.forEach(item => {
-      const band = Math.round(item.row);
-      rows.set(band, (rows.get(band) || 0) + 1);
-    });
-
-    const groups = Array.from(rows.entries())
-      .sort((a, b) => a[0] - b[0])
-      .map(entry => entry[1]);
-
-    // The lowest row is normally the goalkeeper. Do not force this
-    // interpretation for very small test groups.
-    if (placed.size >= 7) {
-      const nonKeeper = groups.slice();
-      const lowest = Math.max(...rows.keys());
-      const keeperCount = rows.get(lowest) || 0;
-      if (keeperCount === 1 && nonKeeper.length > 1) {
-        nonKeeper[nonKeeper.length - 1] = nonKeeper[nonKeeper.length - 1] - 1;
-        if (nonKeeper[nonKeeper.length - 1] <= 0) nonKeeper.pop();
-      }
-      const clean = nonKeeper.filter(n => n > 0).sort((a, b) => b - a);
-      return keeperCount === 1 && clean.length ? `1-${clean.join("-")}` : clean.join("-");
-    }
-
-    return groups.slice().sort((a, b) => b - a).join("-");
+  function defaultPosition(index) {
+    const defaults = ["Goalkeeper", "Right Back", "Centre Back", "Centre Back", "Left Back", "Right Midfield", "Central Midfield", "Central Midfield", "Left Midfield", "Striker", "Striker"];
+    return defaults[index] || "Central Midfield";
   }
 
   function saveStartingXI() {
     if (!currentMatch || !window.MatchTrackerPreSeasonService) return;
-
-    if (placed.size !== 11) {
-      alert(`Please select exactly 11 starting players. You currently have ${placed.size}/11.`);
-      return;
-    }
-
-    const startingXIPositions = Array.from(placed.values()).map(item => ({
-      id: item.player.id,
-      name: item.player.name || "",
-      number: item.player.number || "",
-      col: item.col,
-      row: item.row,
-      x: Math.round((item.col / (GRID_COLS - 1)) * 100),
-      y: Math.round((item.row / (GRID_ROWS - 1)) * 100)
+    if (selected.size !== 11) { alert(`Please select exactly 11 starting players. You currently have ${selected.size}/11.`); return; }
+    const startingXI = Array.from(selected.values()).map(entry => ({
+      id: entry.player.id, sourceId: entry.player.sourceId || entry.player.id,
+      isBorrowed: !!entry.player.isBorrowed,
+      name: entry.player.name, number: entry.player.number,
+      position: entry.position
     }));
-
-    const startingXI = startingXIPositions.map(item => ({
-      id: item.id,
-      name: item.name,
-      number: item.number,
-      position: {
-        col: item.col,
-        row: item.row,
-        x: item.x,
-        y: item.y
-      }
-    }));
-
     const selectedIds = new Set(startingXI.map(player => String(player.id)));
-    const substitutes = (currentMatch.matchdaySquad || [])
-      .filter(player => !selectedIds.has(String(player.id)))
-      .slice(0, 6)
-      .map(player => ({ id: player.id, name: player.name || "", number: player.number || "" }));
-
+    const substitutes = availablePlayers.filter(player => !selectedIds.has(String(player.id)))
+      .slice(0, 6).map(player => ({ id: player.id, sourceId: player.sourceId || player.id, isBorrowed: !!player.isBorrowed, name: player.name || "", number: player.number || "" }));
     const updated = window.MatchTrackerPreSeasonService.updateMatch(currentMatch.id, {
-      matchFormat: "11-a-side",
-      formation: inferShape(),
-      startingXI,
-      startingXIPositions,
-      substitutes,
-      status: "preparing"
+      matchFormat: "11-a-side", formation: selectedFormation, startingXI,
+      startingXIPositions: startingXI.map((player, index) => ({ id: player.id, name: player.name, number: player.number, position: player.position, order: index + 1 })),
+      substitutes, status: "preparing"
     });
-
-    if (!updated) {
-      alert("The Starting XI could not be saved.");
-      return;
-    }
-
+    if (!updated) { alert("The Starting XI could not be saved."); return; }
     currentMatch = updated;
     if (callbacks.onSaved) callbacks.onSaved(updated);
   }
 
-  function normalisePlayer(player) {
-    return {
-      id: player?.id,
-      name: player?.name || "Unnamed Player",
-      number: player?.number || ""
-    };
-  }
-
-  function button(text, background, color) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.textContent = text;
-    btn.style.cssText = `width:100%;min-height:54px;border:none;border-radius:12px;background:${background};color:${color};font-size:16px;font-weight:800;cursor:pointer;`;
-    return btn;
-  }
-
-  function clamp(value, min, max) {
-    const n = Number(value);
-    if (!Number.isFinite(n)) return min;
-    return Math.min(max, Math.max(min, n));
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
+  function normalisePlayer(player) { return { id: player?.id, sourceId: player?.sourceId || player?.id, isBorrowed: !!player?.isBorrowed, name: player?.name || "Unnamed Player", number: player?.number || "" }; }
+  function card() { const el=document.createElement("div"); el.style.cssText=`background:${COLORS.white};border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 3px 10px rgba(0,0,0,.06);`; return el; }
+  function inputStyle() { return "width:100%;min-width:0;min-height:40px;padding:7px;border:1px solid #C8D0D8;border-radius:8px;background:#fff;color:#243447;font-size:12px;box-sizing:border-box;"; }
+  function button(text, background, color) { const btn=document.createElement("button");btn.type="button";btn.textContent=text;btn.style.cssText=`width:100%;min-height:52px;border:none;border-radius:12px;background:${background};color:${color};font-size:16px;font-weight:800;cursor:pointer;`;return btn; }
+  function escapeHtml(value) { return String(value ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;"); }
 
   window.MatchTrackerPreSeasonStartingXI = { init, render };
 })(window);

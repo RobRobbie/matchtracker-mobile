@@ -56,240 +56,81 @@
   // ----------------------------------------------------------
 
   function render(container) {
-
     if (!container) {
       console.error("MatchTrackerHome: container not found.");
       return;
     }
 
     container.innerHTML = "";
+    container.className = "mt-home";
+    container.style.cssText = "min-height:100vh;box-sizing:border-box;padding:16px;background:#F1F4F6;color:#243447;";
 
-    container.style.background = COLORS.lightGrey;
-    container.style.color = COLORS.darkText;
-    container.style.minHeight = "100vh";
-    container.style.boxSizing = "border-box";
-    container.style.padding = "20px";
-
-    // --------------------------------------------------------
-    // HEADER
-    // --------------------------------------------------------
-
-    const header = document.createElement("div");
-
-    header.style.background = COLORS.navy;
-    header.style.color = COLORS.white;
-    header.style.borderRadius = "18px";
-    header.style.padding = "24px 20px";
-    header.style.marginBottom = "20px";
-    header.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-
-    header.innerHTML = `
-      <div style="
-        font-size:13px;
-        font-weight:700;
-        letter-spacing:2px;
-        opacity:0.75;
-        margin-bottom:6px;
-      ">
-        MATCHTRACKER
-      </div>
-
-      <div style="
-        font-size:30px;
-        font-weight:800;
-        line-height:1.1;
-      ">
-        Coach Home
-      </div>
-
-      <div style="
-        font-size:14px;
-        margin-top:8px;
-        opacity:0.85;
-      ">
-        Manage your team, matches and season.
-      </div>
-    `;
-
-    container.appendChild(header);
-
-    // --------------------------------------------------------
-    // PRE SEASON CARD
-    // --------------------------------------------------------
-
-    const preSeasonCard = createFeatureCard({
-      title: "PRE SEASON",
-      description:
-        "Create individual practice or trial matches, manage your test squad and record match statistics.",
-      buttonText: "Open Pre Season",
-      accent: COLORS.blueGreen,
-      onClick: callbacks.onPreSeason
-    });
-
-    container.appendChild(preSeasonCard);
-
-    // --------------------------------------------------------
-    // SEASON CARD
-    // --------------------------------------------------------
-
-    const seasonCard = createFeatureCard({
-      title: "SEASON",
-      description:
-        "Set up your season, manage your squad, record fixtures and build your season statistics.",
-      buttonText: "Open Season",
-      accent: COLORS.navy,
-      onClick: callbacks.onSeason
-    });
-
-    container.appendChild(seasonCard);
-
-    // --------------------------------------------------------
-    // TEAM MANAGEMENT
-    // --------------------------------------------------------
+    const primaryGrid = document.createElement("div");
+    primaryGrid.className = "mt-home-primary-grid";
+    primaryGrid.appendChild(createVisualCard({
+      title:"Pre Season", description:"Practice, trials & squad testing",
+      icon:"▦", accent:COLORS.blueGreen, image:"preseason-training.jpg", onClick:callbacks.onPreSeason
+    }));
+    primaryGrid.appendChild(createVisualCard({
+      title:"Season", description:"Fixtures, matches & statistics",
+      icon:"🏆", accent:COLORS.navy, image:"season-stadium.jpg", onClick:callbacks.onSeason
+    }));
+    container.appendChild(primaryGrid);
 
     const managementHeading = document.createElement("div");
+    managementHeading.className = "mt-section-label";
     managementHeading.innerText = "TEAM MANAGEMENT";
-    managementHeading.style.cssText = "font-size:13px;font-weight:800;letter-spacing:1.5px;margin:26px 4px 10px;color:" + COLORS.darkText;
     container.appendChild(managementHeading);
 
-    container.appendChild(createFeatureCard({
-      title: "SQUAD",
-      description: "Add and manage your players at any time. Players can also be added while preparing a match.",
-      buttonText: "Open Squad",
-      accent: COLORS.navy,
-      onClick: callbacks.onSquad
+    const managementGrid = document.createElement("div");
+    managementGrid.className = "mt-home-secondary-grid";
+    managementGrid.appendChild(createVisualCard({
+      title:"Squad", description:"Manage your players",
+      iconMarkup:`<svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="14" r="5.5"/><circle cx="11.5" cy="18" r="4.2"/><circle cx="36.5" cy="18" r="4.2"/><path d="M12 36c0-6.2 5.1-11 12-11s12 4.8 12 11v2H12z"/><path d="M3.5 36v-1.5c0-4.6 3.1-8.1 7.5-8.8M44.5 36v-1.5c0-4.6-3.1-8.1-7.5-8.8"/></g></svg>`,
+      accent:COLORS.navy, image:"squad-team.jpg", onClick:callbacks.onSquad
     }));
-
-    container.appendChild(createFeatureCard({
-      title: "OPPONENTS",
-      description: "Keep a reusable list of opponents. Add a new opponent whenever you need one.",
-      buttonText: "Open Opponents",
-      accent: COLORS.blueGreen,
-      onClick: callbacks.onOpponents
+    managementGrid.appendChild(createVisualCard({
+      title:"Opponents", description:"Teams & match history",
+      iconMarkup:`<svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10h14l4 4 4-4h16v25H27l-4 4-4-4H5z"/><path d="M23 14v25"/></g><text x="23" y="29" text-anchor="middle" fill="currentColor" font-size="9" font-weight="800">VS</text></svg>`,
+      accent:COLORS.blueGreen, image:"opponents-tactics.jpg", onClick:callbacks.onOpponents
     }));
+    container.appendChild(managementGrid);
 
-    // --------------------------------------------------------
-    // QUICK ACCESS
-    // --------------------------------------------------------
-
-    const quickHeading = document.createElement("div");
-
-    quickHeading.innerText = "QUICK ACCESS";
-
-    quickHeading.style.fontSize = "13px";
-    quickHeading.style.fontWeight = "800";
-    quickHeading.style.letterSpacing = "1.5px";
-    quickHeading.style.margin = "26px 4px 10px";
-
-    quickHeading.style.color = COLORS.darkText;
-
-    container.appendChild(quickHeading);
-
-    // --------------------------------------------------------
-    // SETTINGS
-    // --------------------------------------------------------
-
-    const settingsButton = document.createElement("button");
-
-    settingsButton.type = "button";
-    settingsButton.innerText = "⚙  Settings";
-
-    settingsButton.style.width = "100%";
-    settingsButton.style.minHeight = "58px";
-    settingsButton.style.border = "1px solid " + COLORS.silver;
-    settingsButton.style.borderRadius = "14px";
-    settingsButton.style.background = COLORS.white;
-    settingsButton.style.color = COLORS.darkText;
-    settingsButton.style.fontSize = "17px";
-    settingsButton.style.fontWeight = "700";
-    settingsButton.style.cursor = "pointer";
-    settingsButton.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)";
-
-    settingsButton.onclick = function () {
-
-      if (callbacks.onSettings) {
-        callbacks.onSettings();
-      } else {
-        console.log("MatchTracker Home: Settings not connected yet.");
-      }
-
+    const settings = document.createElement("button");
+    settings.type = "button";
+    settings.className = "mt-settings-button";
+    settings.innerHTML = `<span class="mt-settings-icon">⚙</span><span>Settings</span><span class="mt-card-chevron">›</span>`;
+    settings.onclick = function () {
+      if (callbacks.onSettings) callbacks.onSettings();
+      else console.log("MatchTracker Home: Settings not connected yet.");
     };
+    container.appendChild(settings);
 
-    container.appendChild(settingsButton);
-
+    const buildInfo = document.createElement("div");
+    buildInfo.className = "mt-build-info";
+    buildInfo.innerHTML = "<strong>MatchTracker 2027.028</strong><span>Build code: MT27-028 · Availability order, substitution reasons and visual consistency</span>";
+    container.appendChild(buildInfo);
   }
 
-  // ----------------------------------------------------------
-  // FEATURE CARD
-  // ----------------------------------------------------------
-
-  function createFeatureCard(options) {
-
-    const card = document.createElement("div");
-
-    card.style.background = COLORS.white;
-    card.style.borderRadius = "18px";
-    card.style.padding = "20px";
-    card.style.marginBottom = "16px";
-    card.style.boxShadow = "0 4px 12px rgba(0,0,0,0.07)";
-    card.style.borderLeft =
-      "6px solid " + options.accent;
-    card.style.boxSizing = "border-box";
-
-    const title = document.createElement("div");
-
-    title.innerText = options.title;
-
-    title.style.fontSize = "22px";
-    title.style.fontWeight = "800";
-    title.style.color = COLORS.darkText;
-    title.style.letterSpacing = "0.5px";
-
-    card.appendChild(title);
-
-    const description = document.createElement("div");
-
-    description.innerText = options.description;
-
-    description.style.fontSize = "14px";
-    description.style.lineHeight = "1.5";
-    description.style.color = "#5C6B78";
-    description.style.marginTop = "8px";
-    description.style.marginBottom = "16px";
-
-    card.appendChild(description);
-
-    const button = document.createElement("button");
-
-    button.type = "button";
-    button.innerText = options.buttonText;
-
-    button.style.width = "100%";
-    button.style.minHeight = "52px";
-    button.style.border = "none";
-    button.style.borderRadius = "12px";
-    button.style.background = options.accent;
-    button.style.color = COLORS.white;
-    button.style.fontSize = "16px";
-    button.style.fontWeight = "800";
-    button.style.cursor = "pointer";
-
-    button.onclick = function () {
-
-      if (typeof options.onClick === "function") {
-        options.onClick();
-      } else {
-        console.log(
-          "MatchTracker Home: " +
-          options.title +
-          " is not connected yet."
-        );
-      }
-
+  function createVisualCard(options) {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "mt-feature-card" + (options.image ? " mt-feature-card-image" : "");
+    if (options.image) card.style.setProperty("--mt-card-image", `url("assets/${options.image}")`);
+    card.style.setProperty("--mt-accent", options.accent);
+    card.innerHTML = `
+      <span class="mt-feature-photo" aria-hidden="true"></span>
+      <span class="mt-feature-icon" aria-hidden="true">${options.iconMarkup || options.icon}</span>
+      <span class="mt-feature-copy">
+        <strong>${options.title}</strong>
+        <small>${options.description}</small>
+      </span>
+      <span class="mt-card-chevron" aria-hidden="true"></span>
+    `;
+    card.onclick = function () {
+      if (typeof options.onClick === "function") options.onClick();
+      else console.log("MatchTracker Home: " + options.title + " is not connected yet.");
     };
-
-    card.appendChild(button);
-
     return card;
   }
 

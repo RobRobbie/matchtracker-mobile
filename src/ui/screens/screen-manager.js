@@ -461,8 +461,8 @@
         });
       },
       onContinue: function (updatedMatch) {
-        console.log("MatchTracker: Match squad selected.", updatedMatch);
-        showPreSeasonStartingXI(updatedMatch);
+        console.log("MatchTracker: Matchday team selected.", updatedMatch);
+        showLiveMatch(updatedMatch);
       }
     });
 
@@ -519,7 +519,7 @@
     window.MatchTrackerLiveMatch.init({
       match,
       container: liveMatchContainer,
-      onBack: function (updatedMatch) { showPreSeasonStartingXI(updatedMatch || match); },
+      onBack: function (updatedMatch) { showPreSeasonSquadSelection(updatedMatch || match); },
       onCompleted: function () { showPreSeason(); }
     });
     window.MatchTrackerLiveMatch.render(liveMatchContainer);

@@ -1,233 +1,107 @@
 // ============================================================
-// MATCHTRACKER — PRE SEASON SQUAD SELECTION
+// MATCHTRACKER 2027 — MATCHDAY TEAM SELECTION
+// One continuous selection flow: Starting XI, then Bench.
 // ============================================================
-// Select the players available for a specific Pre Season match.
-// This uses the central current squad as the source of truth.
-// Starting XI and Bench are handled in later match-preparation
-// stages.
-// ============================================================
-
 (function (window) {
   "use strict";
-
-  const COLORS = {
-    navy: "#1E3A5F",
-    blueGreen: "#3F7D70",
-    lightGrey: "#F1F4F6",
-    darkText: "#243447",
-    white: "#FFFFFF",
-    silver: "#B8C2CC",
-    muted: "#5C6B78",
-    danger: "#B42318"
-  };
-
-  let callbacks = {
-    onCancel: null,
-    onContinue: null,
-    onManageSquad: null
-  };
-
-  let currentMatch = null;
-  let selectedIds = new Set();
-
-  function init(options = {}) {
-    callbacks.onCancel = typeof options.onCancel === "function" ? options.onCancel : null;
-    callbacks.onContinue = typeof options.onContinue === "function" ? options.onContinue : null;
-    callbacks.onManageSquad = typeof options.onManageSquad === "function" ? options.onManageSquad : null;
-    currentMatch = options.match || null;
-    if (currentMatch) currentMatch.matchFormat = "11-a-side";
-
-    const existing = currentMatch && Array.isArray(currentMatch.matchdaySquad)
-      ? currentMatch.matchdaySquad
-      : [];
-
-    // Enforce the current 17-player limit even if an older saved match
-    // already contains more players. Keep the first 17 in saved order.
-    selectedIds = new Set(existing.slice(0, 17).map(player => String(player.id)));
+  const C = { navy:"#1E3A5F", green:"#3F7D70", bg:"#F1F4F6", ink:"#243447", white:"#FFFFFF", muted:"#5C6B78", line:"#D7DEE5", disabled:"#E5E9ED", danger:"#B42318" };
+  let callbacks = {}, match = null, containerRef = null, players = [], starters = [], bench = [], phase = "starters", numberOverrides = new Map();
+  function init(options={}) {
+    callbacks = { onCancel:options.onCancel, onManageSquad:options.onManageSquad, onContinue:options.onContinue };
+    match = options.match || null;
+    const regular = window.MatchTrackerStorage?.loadPlayers?.() || [];
+    const borrowed = (window.MatchTrackerStorage?.loadBorrowedPlayers?.() || []).map(p=>({...p,id:`borrowed:${p.id}`,sourceId:p.id,isBorrowed:true}));
+    const all = regular.concat(borrowed);
+    const existing = Array.isArray(match?.matchdaySquad) ? match.matchdaySquad : [];
+    const savedXI = Array.isArray(match?.startingXI) ? match.startingXI : [];
+    const savedBench = Array.isArray(match?.substitutes) ? match.substitutes : [];
+    const eligible = all.filter(p=>!isUnavailable(p));
+    players = eligible.map(p=>({...p, id:String(p.id), isBorrowed:!!p.isBorrowed})).sort((a,b)=>Number(a.number||999)-Number(b.number||999)||String(a.name||"").localeCompare(String(b.name||"")));
+    starters = savedXI.map(s=>players.find(p=>String(p.id)===String(s.id))).filter(Boolean).slice(0,11);
+    bench = savedBench.map(s=>players.find(p=>String(p.id)===String(s.id))).filter(Boolean).filter(p=>!starters.some(x=>x.id===p.id)).slice(0,6);
+    // Preserve an existing match squad when it contains valid players but no saved bench yet.
+    if (!savedXI.length && existing.length) starters = existing.slice(0,11).map(s=>players.find(p=>String(p.id)===String(s.id))).filter(Boolean);
+    numberOverrides = new Map(existing.filter(p=>p.isBorrowed).map(p=>[String(p.id),String(p.number||"")]));
+    phase = starters.length >= 11 ? "bench" : "starters";
   }
-
+  function isUnavailable(p) {
+    const records = window.MatchTrackerStorage?.loadAvailability?.() || [];
+    const today = new Date().toISOString().slice(0,10);
+    return records.some(r=>String(r.playerId)===String(p.sourceId||p.id) && r.status!=="cleared");
+  }
   function render(container) {
-    if (!container) return;
-    container.innerHTML = "";
-    container.style.cssText = `background:${COLORS.lightGrey};color:${COLORS.darkText};min-height:100vh;box-sizing:border-box;padding:20px;`;
-
-    const header = document.createElement("div");
-    header.style.cssText = `background:${COLORS.navy};color:${COLORS.white};border-radius:18px;padding:22px 20px;margin-bottom:16px;box-shadow:0 4px 12px rgba(0,0,0,.08);`;
-    header.innerHTML = `
-      <div style="font-size:13px;font-weight:700;letter-spacing:2px;opacity:.75;margin-bottom:6px">PRE SEASON</div>
-      <div style="font-size:28px;font-weight:800;line-height:1.15">Match Squad</div>
-      <div style="font-size:14px;margin-top:8px;opacity:.85">Choose up to 17 players for this matchday squad. Your Starting XI will be selected next; the remaining players will automatically become substitutes.</div>
-    `;
-    container.appendChild(header);
-
-    const matchCard = document.createElement("div");
-    matchCard.style.cssText = `background:${COLORS.white};border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 3px 10px rgba(0,0,0,.06);`;
-    matchCard.innerHTML = `
-      <div style="font-size:20px;font-weight:800">vs ${escapeHtml((currentMatch && currentMatch.opponent) || "Opponent TBC")}</div>
-      <div style="font-size:14px;color:${COLORS.muted};margin-top:6px">${escapeHtml(formatDetails(currentMatch))}</div>
-    `;
-    container.appendChild(matchCard);
-
-    const squad = window.MatchTrackerStorage ? window.MatchTrackerStorage.loadPlayers() : [];
-    const players = Array.isArray(squad) ? squad.slice().sort(sortPlayers) : [];
-    const seasonStats = window.MatchTrackerStorage ? window.MatchTrackerStorage.loadSeasonStats() : {};
-
-    const section = document.createElement("div");
-    section.style.cssText = `background:${COLORS.white};border-radius:16px;padding:16px;box-shadow:0 3px 10px rgba(0,0,0,.06);`;
-
-    const heading = document.createElement("div");
-    heading.style.cssText = "display:flex;justify-content:space-between;align-items:center;gap:12px;";
-    heading.innerHTML = `<div><div style="font-size:20px;font-weight:800">Current Squad</div><div style="font-size:14px;color:${COLORS.muted};margin-top:4px">Select everyone available for this match.</div></div>`;
-    section.appendChild(heading);
-
-    const count = document.createElement("div");
-    count.id = "mtMatchSquadCount";
-    count.style.cssText = `background:${COLORS.lightGrey};color:${COLORS.navy};border-radius:20px;padding:7px 12px;font-size:13px;font-weight:800;white-space:nowrap;`;
-    heading.appendChild(count);
-
-    if (!players.length) {
-      const empty = document.createElement("div");
-      empty.style.cssText = `margin-top:16px;padding:22px 16px;border:1px dashed ${COLORS.silver};border-radius:12px;text-align:center;color:${COLORS.muted};`;
-      empty.innerHTML = `<div style="font-size:18px;font-weight:800;color:${COLORS.darkText};margin-bottom:6px">No players in the squad yet</div><div>Add players to the squad before preparing this match.</div>`;
-      section.appendChild(empty);
-    } else {
-      const list = document.createElement("div");
-      list.style.marginTop = "14px";
-
-      players.forEach(player => {
-        const id = String(player.id);
-        const row = document.createElement("label");
-        row.style.cssText = `display:flex;align-items:center;gap:12px;background:${COLORS.lightGrey};border:1px solid #E1E6EA;border-radius:12px;padding:12px;margin-bottom:9px;cursor:pointer;`;
-
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = selectedIds.has(id);
-        checkbox.style.width = "22px";
-        checkbox.style.height = "22px";
-        checkbox.style.flex = "none";
-        checkbox.onchange = function () {
-          if (checkbox.checked) {
-            if (!selectedIds.has(id) && selectedIds.size >= 17) {
-              checkbox.checked = false;
-              alert("A matchday squad can contain a maximum of 17 players.");
-              return;
-            }
-            selectedIds.add(id);
-          } else selectedIds.delete(id);
-          updateCount(count);
-        };
-
-        const details = document.createElement("div");
-        details.style.flex = "1";
-        details.style.minWidth = "0";
-        const seasonPlayer = seasonStats && seasonStats[player.name] ? seasonStats[player.name] : null;
-        const yellows = Number(seasonPlayer?.yellow || 0);
-        const cardBadge = yellows > 0
-          ? `<span aria-label="${yellows} season yellow cards" style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:3px 7px;border-radius:8px;background:${yellows >= 4 ? '#FEE2E2' : '#FEF3C7'};color:${yellows >= 4 ? '#991B1B' : '#854D0E'};font-size:12px;font-weight:900;white-space:nowrap">🟨 ${yellows}${yellows >= 4 ? ' · WARNING' : ''}</span>`
-          : '';
-        details.innerHTML = `<div style="display:flex;align-items:center;flex-wrap:wrap;font-size:16px;font-weight:800">${escapeHtml(player.name || "Unnamed Player")}${cardBadge}</div><div style="font-size:12px;color:${COLORS.muted};margin-top:2px">Shirt #${escapeHtml(String(player.number || "—"))}</div>`;
-
-        row.append(checkbox, details);
-        list.appendChild(row);
-      });
-      section.appendChild(list);
-    }
-
-    container.appendChild(section);
-
-    const actions = document.createElement("div");
-    actions.style.cssText = "width:100%;max-width:650px;margin-top:16px;display:flex;flex-direction:column;gap:10px;";
-
-    const manage = document.createElement("button");
-    manage.type = "button";
-    manage.innerText = "＋  Manage Squad";
-    manage.style.cssText = `width:100%;min-height:52px;border:1px solid ${COLORS.silver};border-radius:12px;background:${COLORS.white};color:${COLORS.navy};font-size:16px;font-weight:800;cursor:pointer;`;
-    manage.onclick = function () {
-      saveSelection(false);
-      if (callbacks.onManageSquad) callbacks.onManageSquad();
-    };
-    actions.appendChild(manage);
-
-    const continueButton = document.createElement("button");
-    continueButton.type = "button";
-    continueButton.innerText = "Continue to Starting XI →";
-    continueButton.style.cssText = `width:100%;min-height:56px;border:none;border-radius:12px;background:${COLORS.blueGreen};color:${COLORS.white};font-size:17px;font-weight:800;cursor:pointer;`;
-    continueButton.onclick = function () { saveSelection(true); };
-    actions.appendChild(continueButton);
-
-    const cancel = document.createElement("button");
-    cancel.type = "button";
-    cancel.innerText = "←  Back to Match Details";
-    cancel.style.cssText = `width:100%;min-height:52px;border:1px solid ${COLORS.silver};border-radius:12px;background:${COLORS.white};color:${COLORS.darkText};font-size:16px;font-weight:800;cursor:pointer;`;
-    cancel.onclick = function () { if (callbacks.onCancel) callbacks.onCancel(); };
-    actions.appendChild(cancel);
-
-    container.appendChild(actions);
-    updateCount(count);
+    if(!container)return; containerRef=container; container.innerHTML="";
+    container.style.cssText=`background:${C.bg};color:${C.ink};min-height:100vh;box-sizing:border-box;padding:16px;`;
+    const header=document.createElement("section"); header.style.cssText=`background:linear-gradient(115deg,rgba(30,58,95,.94),rgba(49,93,120,.82)),url(assets/preseason-training.jpg) center/cover;color:white;border-radius:18px;padding:19px;margin-bottom:13px;`;
+    header.innerHTML=`<div style="font-size:11px;font-weight:800;letter-spacing:2px;opacity:.8">PRE-SEASON · TEAM SELECTION</div><div style="font-size:25px;font-weight:900;margin-top:5px">Matchday Team</div><div style="font-size:13px;opacity:.9;margin-top:6px">vs ${esc(match?.opponent||"Opponent TBC")}</div>`; container.appendChild(header);
+    const stage=document.createElement("section"); stage.id="mtSelectionStage";
+    stage.style.cssText=`background:${phase==="bench"?"linear-gradient(135deg,#DCEFE7,#EAF5EF)":"linear-gradient(135deg,#1E3A5F,#315D78)"};color:${phase==="bench"?"#245B46":"white"};border:1px solid ${phase==="bench"?"#A8D6C4":"#1E3A5F"};border-radius:13px;padding:14px 15px;margin-bottom:10px;box-shadow:0 2px 8px #1e3a5f12`;
+    stage.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><strong id="mtStageTitle" style="font-size:17px;letter-spacing:.2px">${phase==='starters'?'SELECT STARTING XI':'STARTING XI COMPLETE · SELECT YOUR BENCH'}</strong><strong id="mtStageCount" style="font-size:17px">${phase==='starters'?starters.length+'/11':bench.length+'/6'}</strong></div>`;
+    container.appendChild(stage);
+    const avail=document.createElement("section"); avail.style.cssText=`background:white;border-radius:15px;padding:14px;box-shadow:0 2px 8px #1e3a5f12`;
+    avail.innerHTML=`<div style="font-size:15px;font-weight:900">${phase==='starters'?'AVAILABLE PLAYERS':'AVAILABLE BENCH PLAYERS'}</div>`;
+    const list=document.createElement("div");list.id="mtAvailableList";list.style.cssText="display:grid;gap:7px;margin-top:11px";avail.appendChild(list);container.appendChild(avail);
+    const actions=document.createElement("div");actions.style.cssText="display:grid;gap:9px;margin:14px auto 0;max-width:650px";
+    const done=document.createElement("button");done.id="mtContinueTeam";done.type="button";done.textContent=phase==='starters'?'Select 11 starters to continue':`Continue to Match · ${starters.length+bench.length}/17`;done.style.cssText=`min-height:53px;border:0;border-radius:12px;background:${C.green};color:white;font-size:16px;font-weight:900`;
+    done.disabled=starters.length!==11;done.style.opacity=done.disabled?".45":"1";done.onclick=saveTeam;actions.appendChild(done);
+    if(phase==='bench'){const back=document.createElement("button");back.type="button";back.textContent="Edit Starting XI";back.style.cssText=`min-height:46px;border:1px solid ${C.line};border-radius:11px;background:white;color:${C.navy};font-weight:800`;back.onclick=()=>{phase="starters";render(containerRef)};actions.appendChild(back)}
+    const cancel=document.createElement("button");cancel.type="button";cancel.textContent="← Back to Match Details";cancel.style.cssText=`min-height:46px;border:1px solid ${C.line};border-radius:11px;background:white;color:${C.ink};font-weight:800`;cancel.onclick=()=>callbacks.onCancel&&callbacks.onCancel();actions.appendChild(cancel);container.appendChild(actions);
+    refresh();
   }
-
-  function saveSelection(continueToNext) {
-    if (!currentMatch || !window.MatchTrackerPreSeasonService) return;
-
-    const players = window.MatchTrackerStorage.loadPlayers();
-    const selected = (Array.isArray(players) ? players : [])
-      .filter(player => selectedIds.has(String(player.id)))
-      .map(player => ({ id: player.id, name: player.name || "", number: player.number || "" }));
-
-    if (!selected.length) {
-      alert("Please select at least one player for the match.");
-      return;
-    }
-    if (selected.length > 17) {
-      alert("A matchday squad can contain a maximum of 17 players.");
-      return;
-    }
-
-    const updated = window.MatchTrackerPreSeasonService.updateMatch(currentMatch.id, {
-      matchFormat: "11-a-side",
-      matchdaySquad: selected,
-      // Any changed match squad invalidates the old lineup/bench; the coach
-      // will choose the XI next and the bench is derived from the remaining players.
-      startingXI: [],
-      startingXIPositions: [],
-      substitutes: []
+  function refresh(){
+    if(!containerRef)return;
+    const list=containerRef.querySelector('#mtAvailableList'); if(!list)return;
+    list.innerHTML="";
+    const stageTitle=containerRef.querySelector('#mtStageTitle');
+    const stageCount=containerRef.querySelector('#mtStageCount');
+    if(stageTitle)stageTitle.textContent=phase==='starters'?'SELECT STARTING XI':'SELECT BENCH';
+    if(stageCount){stageCount.textContent=phase==='starters'?`${starters.length}/11`:`${bench.length}/6`;stageCount.style.color=phase==='starters'?C.navy:C.green}
+    const stats=window.MatchTrackerStorage?.loadSeasonStats?.()||{};
+    players.forEach(p=>{
+      const id=String(p.id), xiIndex=starters.findIndex(x=>String(x.id)===id), benchIndex=bench.findIndex(x=>String(x.id)===id);
+      const inXI=xiIndex>=0, inBench=benchIndex>=0, chosen=inXI||inBench;
+      const row=document.createElement('button'); row.type='button';
+      row.style.cssText=`display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:9px;width:100%;min-height:52px;padding:6px 9px;border:1px solid ${inXI?'#9BB7D0':inBench?'#A8D6C4':C.line};border-radius:11px;background:${inXI?'#E8EFF7':inBench?'#E5F3ED':C.white};color:${C.ink};text-align:left;cursor:${chosen?'default':'pointer'};`;
+      const number=document.createElement('span');number.textContent=p.number||'—';number.style.cssText=`display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:${chosen?'#FFFFFF':'#EAF0F5'};color:${C.navy};font-size:16px;font-weight:900`;
+      const copy=document.createElement('span');copy.style.cssText='display:block;min-width:0';
+      const name=document.createElement('strong');name.textContent=p.name||'Unnamed player';name.style.cssText='display:block;font-size:14px;line-height:1.2;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+      const meta=document.createElement('small');meta.textContent=`${p.isBorrowed?'BORROWED':'SQUAD'} · #${numberOverrides.get(p.id)||p.number||'—'}`;meta.style.cssText=`display:block;margin-top:3px;font-size:10px;letter-spacing:.45px;color:${C.muted};font-weight:750`;
+      copy.append(name,meta);
+      const tag=document.createElement('span');
+      if(inXI){tag.textContent=`STARTER ${xiIndex+1} · REMOVE`;tag.style.cssText='background:#D3E1F0;color:#244B73'}
+      else if(inBench){tag.textContent=`BENCH ${benchIndex+1} · REMOVE`;tag.style.cssText='background:#CDE8DA;color:#276B50'}
+      else {tag.textContent=phase==='starters'?'SELECT XI':'SELECT BENCH';tag.style.cssText=`background:#E9EEF2;color:${C.muted}`}
+      tag.style.cssText+=`;padding:6px 7px;border-radius:7px;font-size:9px;font-weight:900;white-space:nowrap`;
+      row.append(number,copy,tag);
+      const y=Number(stats[p.name]?.yellow||0);
+      if(y){const caution=document.createElement('small');caution.textContent=`🟨 ${y}${y>=4?' · SUSPENSION WARNING':''}`;caution.style.cssText=`grid-column:2/4;color:${y>=4?'#B42318':'#946200'};font-size:10px;font-weight:850;margin-top:-5px`;row.appendChild(caution)}
+      row.disabled=!chosen&&(phase==='starters'?starters.length>=11:bench.length>=6);
+      row.style.opacity=chosen?'.96':'1';
+      row.onclick=()=>{
+        if(chosen){
+          if(inXI){starters.splice(xiIndex,1);phase='starters';}
+          else if(inBench){bench.splice(benchIndex,1);}
+          render(containerRef);
+          return;
+        }
+        if(phase==='starters'){
+          if(starters.length>=11)return;
+          starters.push(p);
+          if(starters.length===11){
+            phase='bench';render(containerRef);
+            const stageEl=containerRef.querySelector('#mtSelectionStage');
+            if(stageEl)stageEl.scrollIntoView({behavior:'smooth',block:'start'});
+            return;
+          }
+        }else if(bench.length<6)bench.push(p);
+        refresh();
+      };
+      list.appendChild(row);
     });
-
-    if (!updated) {
-      alert("The match squad could not be saved.");
-      return;
-    }
-
-    currentMatch = updated;
-
-    if (continueToNext && callbacks.onContinue) callbacks.onContinue(updated);
+    const done=containerRef.querySelector('#mtContinueTeam');
+    if(done){done.textContent=phase==='starters'?'Select 11 starters to continue':`Continue to Match · ${starters.length+bench.length}/17`;done.disabled=starters.length!==11;done.style.opacity=done.disabled?'.45':'1'}
   }
-
-  function updateCount(element) {
-    if (element) element.textContent = `${selectedIds.size}/17 players selected`;
-  }
-
-  function sortPlayers(a, b) {
-    const na = Number(a.number);
-    const nb = Number(b.number);
-    if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
-    return String(a.name || "").localeCompare(String(b.name || ""));
-  }
-
-  function formatDetails(match) {
-    if (!match) return "";
-    return [match.date || "Date TBC", match.kickOff || "Kick Off TBC", match.venue || "Venue TBC", match.matchFormat || ""].filter(Boolean).join(" • ");
-  }
-
-  function escapeHtml(value) {
-    return String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
-  window.MatchTrackerPreSeasonSquadSelection = { init, render };
-
+  function saveTeam(){if(starters.length!==11){alert('Please select exactly 11 starting players.');return}const squad=starters.concat(bench).map(p=>({...p,number:numberOverrides.get(p.id)||p.number||''}));const updated=window.MatchTrackerPreSeasonService?.updateMatch(match.id,{matchFormat:'11-a-side',matchdaySquad:squad,startingXI:starters.map((p,i)=>({...p,number:numberOverrides.get(p.id)||p.number||'',position:match?.startingXI?.[i]?.position||''})),substitutes:bench.map(p=>({...p,number:numberOverrides.get(p.id)||p.number||''})),status:'preparing'});if(!updated){alert('The match team could not be saved.');return}match=updated;if(callbacks.onContinue)callbacks.onContinue(updated)}
+  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  window.MatchTrackerPreSeasonSquadSelection={init,render};
 })(window);

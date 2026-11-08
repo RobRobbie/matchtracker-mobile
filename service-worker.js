@@ -1,8 +1,15 @@
-const CACHE_NAME = "matchtracker-test-v7";
+const CACHE_NAME = "matchtracker-2027-028";
 const urlsToCache = [
   "./",
   "./index.html",
   "./style-mobile.css",
+  "./assets/stadium-scene.svg",
+  "./assets/hero-stadium.jpg",
+  "./assets/preseason-training.jpg",
+  "./assets/season-stadium.jpg",
+  "./assets/squad-team.jpg",
+  "./assets/opponents-tactics.jpg",
+  "./assets/football-detail.jpg",
   "./app-mobile.js",
   "./manifest.json",
   "./src/services/storage.js",

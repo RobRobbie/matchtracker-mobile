@@ -1,7 +1,7 @@
 {
-  "name": "MatchTracker",
+  "name": "MatchTracker 2027",
   "short_name": "MatchTracker",
-  "start_url": "/matchtracker-mobile/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1E3A5F",

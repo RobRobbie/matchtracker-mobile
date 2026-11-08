@@ -96,7 +96,7 @@
     container.style.color = COLORS.darkText;
     container.style.minHeight = "100vh";
     container.style.boxSizing = "border-box";
-    container.style.padding = "20px";
+    container.style.padding = "14px";
 
 
     // --------------------------------------------------------
@@ -104,43 +104,12 @@
     // --------------------------------------------------------
 
     const header = document.createElement("div");
-
-    header.style.background = COLORS.navy;
-    header.style.color = COLORS.white;
-    header.style.borderRadius = "18px";
-    header.style.padding = "20px";
-    header.style.marginBottom = "20px";
-    header.style.boxShadow =
-      "0 4px 12px rgba(0,0,0,0.08)";
-
+    header.className = "mt-preseason-hero";
     header.innerHTML = `
-      <div style="
-        font-size:13px;
-        font-weight:700;
-        letter-spacing:2px;
-        opacity:0.75;
-        margin-bottom:6px;
-      ">
-        MATCHTRACKER
-      </div>
-
-      <div style="
-        font-size:28px;
-        font-weight:800;
-        line-height:1.1;
-      ">
-        Pre Season
-      </div>
-
-      <div style="
-        font-size:14px;
-        margin-top:8px;
-        opacity:0.85;
-      ">
-        Standalone matches, squad testing and player statistics.
-      </div>
+      <div class="mt-brand">MATCHTRACKER</div>
+      <div class="mt-preseason-hero-title">Pre Season</div>
+      <div class="mt-preseason-hero-subtitle">Practice matches, trials and squad testing.</div>
     `;
-
     container.appendChild(header);
 
 
@@ -150,15 +119,7 @@
 
     const newMatchCard = document.createElement("div");
 
-    newMatchCard.style.background = COLORS.white;
-    newMatchCard.style.borderRadius = "18px";
-    newMatchCard.style.padding = "20px";
-    newMatchCard.style.marginBottom = "16px";
-    newMatchCard.style.boxShadow =
-      "0 4px 12px rgba(0,0,0,0.07)";
-    newMatchCard.style.borderLeft =
-      "6px solid " + COLORS.blueGreen;
-    newMatchCard.style.boxSizing = "border-box";
+    newMatchCard.className = "mt-create-match-card";
 
     const newMatchTitle = document.createElement("div");
 
@@ -211,10 +172,33 @@
 
 
     // --------------------------------------------------------
-    // UPCOMING / PREVIOUS MATCHES
+    // MATCH LIST NAVIGATION
     // --------------------------------------------------------
 
-    renderSavedMatches(container);
+    const matchNavigation = document.createElement("div");
+    matchNavigation.className = "mt-match-nav";
+
+    const matchPanel = document.createElement("div");
+    matchPanel.id = "mtPreSeasonMatchPanel";
+    matchPanel.style.display = "none";
+
+    function makeMatchNavigationButton(label, description, view) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.innerHTML = `<span style="display:block;font-size:16px">${label}</span><span style="display:block;font-size:11px;font-weight:500;opacity:.82;margin-top:5px">${description}</span>`;
+      button.onclick = function () {
+        matchPanel.innerHTML = "";
+        renderSavedMatches(matchPanel, view);
+        matchPanel.style.display = "block";
+        matchPanel.scrollIntoView({behavior:"smooth",block:"start"});
+      };
+      matchNavigation.appendChild(button);
+    }
+
+    makeMatchNavigationButton("Pre Season Games", "View upcoming matches", "upcoming");
+    makeMatchNavigationButton("History", "Review completed matches", "history");
+    container.appendChild(matchNavigation);
+    container.appendChild(matchPanel);
 
 
     // --------------------------------------------------------
@@ -426,7 +410,7 @@
   // RENDER SAVED MATCHES
   // ----------------------------------------------------------
 
-  function renderSavedMatches(container) {
+  function renderSavedMatches(container, view = "upcoming") {
 
     if (!window.MatchTrackerPreSeasonService) {
       console.error(
@@ -466,22 +450,23 @@
         ) === -1;
     });
 
-    renderMatchSection(
-      container,
-      "UPCOMING MATCHES",
-      "Matches that have been created and are still to be played.",
-      upcomingMatches,
-      "No upcoming pre-season matches yet."
-    );
-
-    renderMatchSection(
-      container,
-      "PREVIOUS MATCHES",
-      "Completed pre-season matches will appear here.",
-      previousMatches,
-      "No previous pre-season matches yet.",
-      {}
-    );
+    if (view === "history") {
+      renderMatchSection(
+        container,
+        "PRE SEASON HISTORY",
+        "Completed Pre Season matches. Select a match to review its result and statistics.",
+        previousMatches,
+        "No completed Pre Season matches yet."
+      );
+    } else {
+      renderMatchSection(
+        container,
+        "UPCOMING PRE SEASON GAMES",
+        "Matches still to be played. Completed matches automatically move to History.",
+        upcomingMatches,
+        "No upcoming Pre Season matches yet."
+      );
+    }
   }
 
 
