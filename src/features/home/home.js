@@ -72,8 +72,8 @@
       icon:"▦", accent:COLORS.blueGreen, image:"preseason-training.jpg", onClick:callbacks.onPreSeason
     }));
     primaryGrid.appendChild(createVisualCard({
-      title:"Season", description:"Fixtures, matches & statistics",
-      icon:"🏆", accent:COLORS.navy, image:"season-stadium.jpg", onClick:callbacks.onSeason
+      title:"Season", description:"Season tracking is coming soon",
+      icon:"🏆", accent:COLORS.navy, image:"season-stadium.jpg", disabled:true
     }));
     container.appendChild(primaryGrid);
 
@@ -100,10 +100,9 @@
     settings.type = "button";
     settings.className = "mt-settings-button";
     settings.innerHTML = `<span class="mt-settings-icon">⚙</span><span>Settings</span><span class="mt-card-chevron">›</span>`;
-    settings.onclick = function () {
-      if (callbacks.onSettings) callbacks.onSettings();
-      else console.log("MatchTracker Home: Settings not connected yet.");
-    };
+    settings.disabled = true;
+    settings.setAttribute("aria-label", "Settings, coming soon");
+    settings.title = "Settings are coming soon";
     container.appendChild(settings);
 
     const buildInfo = document.createElement("div");
@@ -116,6 +115,12 @@
     const card = document.createElement("button");
     card.type = "button";
     card.className = "mt-feature-card" + (options.image ? " mt-feature-card-image" : "");
+    if (options.disabled) {
+      card.disabled = true;
+      card.setAttribute("aria-label", `${options.title}, coming soon`);
+      card.style.opacity = "0.65";
+      card.style.cursor = "not-allowed";
+    }
     if (options.image) card.style.setProperty("--mt-card-image", `url("assets/${options.image}")`);
     card.style.setProperty("--mt-accent", options.accent);
     card.innerHTML = `
@@ -128,6 +133,7 @@
       <span class="mt-card-chevron" aria-hidden="true"></span>
     `;
     card.onclick = function () {
+      if (options.disabled) return;
       if (typeof options.onClick === "function") options.onClick();
       else console.log("MatchTracker Home: " + options.title + " is not connected yet.");
     };
@@ -156,3 +162,4 @@
   });
 
 })();
+
