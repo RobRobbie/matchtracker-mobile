@@ -150,6 +150,14 @@ button:hover {
     <label for="loginPassword">Password</label>
     <input id="loginPassword" type="password" autocomplete="current-password" required>
     <button id="loginButton" type="submit">Sign in</button>
+    <button id="recoverButton" type="button">Set or reset password</button>
+    <div id="passwordSetup" hidden>
+      <label for="newPassword">New password</label>
+      <input id="newPassword" type="password" autocomplete="new-password" minlength="8">
+      <label for="confirmPassword">Confirm new password</label>
+      <input id="confirmPassword" type="password" autocomplete="new-password" minlength="8">
+      <button id="savePasswordButton" type="button">Save password</button>
+    </div>
     <p id="authMessage" role="status" aria-live="polite"></p>
   </form>
 </section>
