@@ -7,6 +7,22 @@
   <link rel="stylesheet" href="style-mobile.css?v=23">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="matchtracker-icon-512-v2.png">
+  <meta name="theme-color" content="#10291f">
+  <style>
+    #matchtrackerHome, #matchtrackerApp { display: none !important; }
+    #authGate { min-height: 100vh; display: grid; place-items: center; padding: 24px; box-sizing: border-box; background: #10291f; font-family: Arial, sans-serif; }
+    #authGate[hidden] { display: none; }
+    .auth-card { width: min(100%, 420px); padding: 28px; border-radius: 18px; background: #fff; box-shadow: 0 18px 60px #0004; }
+    .auth-card h1 { margin: 0 0 8px; color: #173b2d; }
+    .auth-card p { line-height: 1.5; color: #52615a; }
+    .auth-card label { display: block; margin-top: 16px; font-weight: 700; }
+    .auth-card input { width: 100%; box-sizing: border-box; margin-top: 6px; padding: 12px; border: 1px solid #aab8b0; border-radius: 8px; font-size: 16px; }
+    .auth-card button { width: 100%; margin: 20px 0 0; background: #177245; color: white; }
+    #authMessage { min-height: 1.5em; color: #9d2525; }
+    #accountBar { display:none; position: sticky; top:0; z-index:10000; padding:8px 12px; background:#173b2d; color:#fff; text-align:right; font:14px Arial,sans-serif; }
+    #accountBar button { min-height:32px; padding:5px 10px; margin-left:10px; }
+    body.mt-authenticated #matchtrackerHome, body.mt-authenticated #matchtrackerApp { display: block !important; }
+  </style>
 
   <style>
 
@@ -124,6 +140,20 @@ button:hover {
 </head>
 
 <body>
+
+<section id="authGate" aria-label="Sign in">
+  <form id="loginForm" class="auth-card">
+    <h1>MatchTracker 2027</h1>
+    <p>This app is private. Sign in with an account invited by the owner.</p>
+    <label for="loginEmail">Email</label>
+    <input id="loginEmail" type="email" autocomplete="username" required>
+    <label for="loginPassword">Password</label>
+    <input id="loginPassword" type="password" autocomplete="current-password" required>
+    <button id="loginButton" type="submit">Sign in</button>
+    <p id="authMessage" role="status" aria-live="polite"></p>
+  </form>
+</section>
+<div id="accountBar"><span id="signedInAs"></span><span id="syncStatus">Not synced</span><button id="signOutButton" type="button">Sign out</button></div>
 
 <div id="matchtrackerHome"></div>
 <div id="matchtrackerApp" style="display:none;">
@@ -295,26 +325,8 @@ button:hover {
 
 </div>
 
-<script src="src/services/storage.js?v=7"></script>
-<script src="app-mobile.js?v=11"></script>
-<script src="src/features/home/home.js?v=17"></script>
-<script src="src/features/preseason/preseason.js?v=11"></script>
-<script src="src/core/match/match-model.js"></script>
-<script src="src/services/preseason/preseason-match-service.js"></script>
-<script src="src/features/preseason/new-preseason-match.js?v=9"></script>
-<script src="src/features/preseason/squad-selection.js?v=11"></script>
-<script src="src/features/preseason/starting-xi.js?v=12"></script>
-<script src="src/features/match/live-match.js?v=8"></script>
-<script src="src/features/squad/squad.js?v=9"></script>
-<script src="src/features/opponents/opponents.js?v=7"></script>
-<script src="src/ui/screens/screen-manager.js?v=10"></script>
-
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js')
-    .then(() => console.log('Service Worker Registered'));
-}
-</script>
+<script type="module" src="/src/auth/bootstrap.js"></script>
 
 </body>
 </html>
+
