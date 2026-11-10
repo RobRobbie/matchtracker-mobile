@@ -110,7 +110,7 @@ function watchLocalChanges(userId) {
 }
 
 const appScripts = [
-  'src/services/storage.js', 'app-mobile.js', 'src/features/home/home.js',
+  'src/services/storage.js', 'src/features/home/home.js',
   'src/features/preseason/preseason.js', 'src/core/match/match-model.js',
   'src/services/preseason/preseason-match-service.js',
   'src/features/preseason/new-preseason-match.js',
