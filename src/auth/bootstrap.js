@@ -5,6 +5,9 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const gate = document.querySelector('#authGate');
 const form = document.querySelector('#loginForm');
 const message = document.querySelector('#authMessage');
+const recoveryButton = document.querySelector('#recoverButton');
+const passwordSetup = document.querySelector('#passwordSetup');
+const savePasswordButton = document.querySelector('#savePasswordButton');
 const accountBar = document.querySelector('#accountBar');
 const syncStatus = document.querySelector('#syncStatus');
 const signedInAs = document.querySelector('#signedInAs');
@@ -15,6 +18,7 @@ let activeUserId = null;
 let pendingSync = false;
 let syncTimer;
 let loadedScripts = false;
+let callbackType = '';
 
 const LEGACY_KEYS = ['lastMatch', 'matchLog', 'seasonStats'];
 const STORAGE_MARKER = 'matchtracker.cloud.owner';
@@ -46,6 +50,14 @@ function restore(data) {
 function setMessage(text, isError = true) {
   message.textContent = text;
   message.style.color = isError ? '#9d2525' : '#23643e';
+}
+
+function showPasswordSetup() {
+  form.querySelectorAll('#loginEmail, #loginPassword, label[for="loginEmail"], label[for="loginPassword"], #loginButton, #recoverButton').forEach(element => { element.hidden = true; });
+  passwordSetup.hidden = false;
+  document.querySelector('#newPassword').required = true;
+  document.querySelector('#confirmPassword').required = true;
+  setMessage('Choose a password for your private MatchTracker account.', false);
 }
 
 async function saveCloudState(userId) {
@@ -157,12 +169,20 @@ async function initializeAuth() {
     setMessage('Setup needed: add the Supabase URL and publishable key to the deployment settings.');
     form.querySelectorAll('input, button').forEach(input => { input.disabled = true; });
   } else {
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    callbackType = query.get('type') || hash.get('type') || '';
     client = createClient(supabaseUrl, supabaseKey, {
       auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true }
     });
     const { data: { session } } = await client.auth.getSession();
     if (session) {
-      try { await enterApp(session); } catch (error) { setMessage(`Could not load your private data: ${error.message}`); }
+      if (callbackType === 'invite' || callbackType === 'recovery') showPasswordSetup();
+      else {
+        try { await enterApp(session); } catch (error) { setMessage(`Could not load your private data: ${error.message}`); }
+      }
+    } else if (callbackType === 'invite' || callbackType === 'recovery') {
+      setMessage('The email link did not finish signing you in. Use “Set or reset password” to request a fresh link.');
     }
   }
 }
@@ -185,6 +205,41 @@ form.addEventListener('submit', async event => {
     catch (loadError) { setMessage(`Could not open the app: ${loadError.message}`); }
   }
   button.disabled = false;
+});
+
+recoveryButton.addEventListener('click', async () => {
+  if (!client) return;
+  const email = document.querySelector('#loginEmail').value.trim();
+  if (!email) {
+    setMessage('Enter your invited email address first.');
+    document.querySelector('#loginEmail').focus();
+    return;
+  }
+  recoveryButton.disabled = true;
+  const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+  setMessage(error ? 'Could not send the password link. Check the email address and try again.' : 'If that email has an invited account, Supabase has sent a password link.', Boolean(error));
+  recoveryButton.disabled = false;
+});
+
+savePasswordButton.addEventListener('click', async () => {
+  const password = document.querySelector('#newPassword').value;
+  const confirmation = document.querySelector('#confirmPassword').value;
+  if (password.length < 8) return setMessage('Use a password with at least 8 characters.');
+  if (password !== confirmation) return setMessage('The passwords do not match.');
+  savePasswordButton.disabled = true;
+  const { data, error } = await client.auth.updateUser({ password });
+  if (error) {
+    setMessage('Could not save that password. Please try the link again.');
+    savePasswordButton.disabled = false;
+    return;
+  }
+  try {
+    const { data: { session } } = await client.auth.getSession();
+    if (!session) throw new Error('Your sign-in session expired. Request a fresh password link.');
+    await enterApp(session);
+  }
+  catch (loadError) { setMessage(`Could not open the app: ${loadError.message}`); }
+  savePasswordButton.disabled = false;
 });
 
 signOutButton.addEventListener('click', async () => {
