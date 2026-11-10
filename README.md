@@ -2,6 +2,8 @@
 
 Private web build based on the supplied Build 028 project. It adds Supabase email/password sign-in and a per-user cloud save protected by PostgreSQL Row Level Security (RLS).
 
+The first live test deployment uses the separate `matchtracker-2027-preview` branch. The intended `matchtracker-2027` branch remains unchanged during testing.
+
 ## Setup
 
 1. Create `.env.local` beside `package.json` using `.env.example` as a template. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` from the Supabase project settings. The publishable key is intended for browser apps; never use a `secret` or `service_role` key here.
@@ -11,4 +13,3 @@ Private web build based on the supplied Build 028 project. It adds Supabase emai
 5. Add the two same `VITE_` values to the Vercel project environment variables and deploy this project.
 
 The app copies its existing MatchTracker local-storage data to the signed-in user's private database record on first login. Ongoing writes save through the logged-in Supabase session. RLS allows a user to read or change only their own record.
-
